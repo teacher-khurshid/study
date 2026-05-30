@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mr. Khurshid · Study Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:      #065A82;
+    --teal-dark: #043F5C;
+    --teal-soft: #E3EEF3;
+    --teal-tint: #F0F7FA;
+    --coral:     #F96167;
+    --coral-soft:#FDE6E7;
+    --green:     #10B981;
+    --green-soft:#D1FAE5;
+    --dark:      #1F2A3D;
+    --muted:     #6B7280;
+    --gray-border:#E5E7EB;
+    --gray-bg:   #F9FAFB;
+    --white:     #FFFFFF;
+
+    --font: 'Manrope', 'Calibri', 'Helvetica Neue', Arial, sans-serif;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow:    0 4px 14px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 18px 38px rgba(15, 23, 42, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--font);
+    color: var(--dark);
+    background: #FAFCFD;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* Decorative gradient blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob-1 { width: 600px; height: 600px; background: var(--teal-soft); top: -200px; right: -150px; }
+  .blob-2 { width: 480px; height: 480px; background: var(--coral-soft); bottom: -150px; left: -120px; opacity: 0.4; }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 56px 32px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 640px) {
+    .container { padding: 36px 20px 56px; }
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+  .eyebrow {
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    color: var(--teal);
+    background: var(--teal-soft);
+    padding: 7px 16px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+  }
+  .hero-title {
+    font-size: clamp(40px, 6.5vw, 72px);
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+    margin-bottom: 20px;
+  }
+  .hero-title .accent { color: var(--teal); }
+  .hero-title .accent-coral { color: var(--coral); }
+  .hero-sub {
+    font-size: 19px;
+    color: var(--muted);
+    max-width: 580px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+  @media (max-width: 640px) {
+    .hero { margin-bottom: 40px; }
+    .hero-sub { font-size: 16px; }
+  }
+
+  /* Section label */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .section-label::before,
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--gray-border);
+  }
+  .section-label span {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* Exercise grid */
+  .exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 56px;
+  }
+  @media (max-width: 540px) {
+    .exercise-grid { grid-template-columns: 1fr; gap: 16px; }
+  }
+
+  .exercise-card {
+    display: block;
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .exercise-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 55%, var(--teal-tint) 100%);
+    opacity: 0;
+    transition: opacity 0.28s;
+    pointer-events: none;
+  }
+  .exercise-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--teal);
+  }
+  .exercise-card:hover::after { opacity: 1; }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    position: relative;
+    z-index: 1;
+  }
+  .card-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    font-size: 28px;
+    background: var(--teal-soft);
+  }
+  .level-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--coral);
+    background: var(--coral-soft);
+    padding: 5px 11px;
+    border-radius: 100px;
+  }
+  .card-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    position: relative;
+    z-index: 1;
+  }
+  .card-desc {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.55;
+    margin-bottom: 22px;
+    position: relative;
+    z-index: 1;
+  }
+  .card-meta {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding-top: 18px;
+    border-top: 1px dashed var(--gray-border);
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .meta-item strong { color: var(--dark); font-weight: 700; }
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 15px;
+    transition: gap 0.2s;
+    position: relative;
+    z-index: 1;
+  }
+  .exercise-card:hover .card-cta { gap: 12px; }
+  .card-cta-arrow {
+    display: inline-grid; place-items: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: var(--white);
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .exercise-card:hover .card-cta-arrow { background: var(--teal-dark); }
+
+  /* Coming-soon ghost card (visible placeholder) */
+  .ghost-card {
+    background: transparent;
+    border: 2px dashed var(--gray-border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 220px;
+    color: var(--muted);
+  }
+  .ghost-card .ghost-icon {
+    font-size: 32px;
+    opacity: 0.5;
+    margin-bottom: 12px;
+  }
+  .ghost-card .ghost-text {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .ghost-card .ghost-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+    opacity: 0.8;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding-top: 32px;
+    border-top: 1px solid var(--gray-border);
+    margin-top: 24px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer strong { color: var(--dark); font-weight: 700; }
+  footer .footer-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  footer .footer-link {
+    color: var(--teal);
+    font-weight: 600;
+    font-size: 13px;
+    transition: color 0.15s;
+  }
+  footer .footer-link:hover { color: var(--teal-dark); }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .fade-in:nth-child(1) { animation-delay: 0.05s; }
+  .fade-in:nth-child(2) { animation-delay: 0.15s; }
+  .fade-in:nth-child(3) { animation-delay: 0.25s; }
+  .fade-in:nth-child(4) { animation-delay: 0.35s; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<main class="container">
+  <header class="hero fade-in">
+    <span class="eyebrow">REGISTON LC · STUDY HUB</span>
+    <h1 class="hero-title">Train your <span class="accent">English.</span></h1>
+    <p class="hero-sub">Interactive exercises for IELTS and Multi-Level prep. Pick one, start practicing — wrong answers come back until you nail them.</p>
+  </header>
+
+  <div class="section-label fade-in">
+    <span>Available now</span>
+  </div>
+
+  <section class="exercise-grid">
+
+    <!-- ============================================================ -->
+    <!-- EXERCISE CARD: Listening Part 1                              -->
+    <!-- To add another exercise, copy this whole <a>...</a> block    -->
+    <!-- and change: href, icon, title, description, meta, level pill -->
+    <!-- ============================================================ -->
+    <a href="./Listening_Part_1_Practice.html" class="exercise-card fade-in">
+      <div class="card-top">
+        <div class="card-icon">🎧</div>
+        <span class="level-pill">A2 – B1+</span>
+      </div>
+      <h3 class="card-title">Listening · Part 1</h3>
+      <p class="card-desc">Short conversations. Pick the best response. Drill mode for practice, test mode for self-assessment.</p>
+      <div class="card-meta">
+        <span class="meta-item">📝 <strong>100</strong> questions</span>
+        <span class="meta-item">⚡ Drill / 📋 Test</span>
+      </div>
+      <span class="card-cta">
+        Open practice
+        <span class="card-cta-arrow">→</span>
+      </span>
+    </a>
+
+    <!-- Ghost card — visible placeholder for future exercises -->
+    <div class="ghost-card fade-in">
+      <div class="ghost-icon">✨</div>
+      <div class="ghost-text">More exercises coming</div>
+      <div class="ghost-sub">Reading, Speaking, Writing · in progress</div>
+    </div>
+
+  </section>
+
+  <footer>
+    <div class="footer-row">
+      <span>Prepared by <strong>Mr. Khurshid</strong></span>
+      <span>·</span>
+      <span>REGISTON LC</span>
+    </div>
+  </footer>
+</main>
+
+</body>
+</html>
