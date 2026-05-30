@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Behind the scenes · Reading Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #065A82; --teal-dark: #043F5C; --teal-soft: #E3EEF3; --teal-tint: #F0F7FA;
+    --coral: #F96167; --coral-soft: #FDE6E7;
+    --green: #10B981; --green-soft: #D1FAE5;
+    --red: #DC2626; --red-soft: #FEE2E2;
+    --highlight: #FEF3C7; --highlight-strong: #FDE68A;
+    --dark: #1F2A3D; --muted: #6B7280;
+    --gray-border: #E5E7EB; --gray-bg: #F9FAFB; --white: #FFFFFF;
+    --font: 'Manrope', 'Calibri', 'Helvetica Neue', Arial, sans-serif;
+    --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --radius: 14px; --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 18px 38px rgba(15, 23, 42, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: var(--font); color: var(--dark);
+    background: #FAFCFD; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  .blob {
+    position: fixed; border-radius: 50%; filter: blur(90px);
+    opacity: 0.5; pointer-events: none; z-index: 0;
+  }
+  .blob-1 { width: 500px; height: 500px; background: var(--teal-soft); top: -150px; right: -100px; }
+  .blob-2 { width: 400px; height: 400px; background: var(--coral-soft); bottom: -100px; left: -100px; opacity: 0.4; }
+
+  /* ============================================================
+     LANDING
+     ============================================================ */
+  .landing {
+    max-width: 1080px; margin: 0 auto; padding: 56px 32px 80px;
+    position: relative; z-index: 1;
+  }
+  .landing-header {
+    text-align: center; margin-bottom: 48px;
+  }
+  .breadcrumb {
+    font-size: 13px; color: var(--muted); margin-bottom: 20px;
+    letter-spacing: 0.04em;
+  }
+  .breadcrumb strong { color: var(--dark); }
+  .eyebrow {
+    display: inline-block; font-size: 13px; letter-spacing: 0.14em;
+    font-weight: 700; color: var(--teal); background: var(--teal-soft);
+    padding: 7px 16px; border-radius: 100px; margin-bottom: 24px;
+  }
+  .article-title {
+    font-family: var(--serif);
+    font-size: clamp(40px, 6vw, 64px); font-weight: 600;
+    color: var(--dark); letter-spacing: -0.02em;
+    line-height: 1.05; margin-bottom: 14px;
+  }
+  .article-sub {
+    font-size: 18px; color: var(--muted);
+    max-width: 640px; margin: 0 auto 12px;
+  }
+  .article-meta {
+    font-size: 13px; color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .article-meta strong { color: var(--coral); font-weight: 700; }
+
+  .card-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 20px; margin-top: 48px;
+  }
+  @media (max-width: 880px) { .card-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg); padding: 28px;
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: var(--shadow-sm);
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    text-align: left;
+  }
+  .card::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 60%, var(--teal-tint) 100%);
+    opacity: 0; transition: opacity 0.25s; pointer-events: none;
+  }
+  .card:hover {
+    transform: translateY(-4px); box-shadow: var(--shadow-lg);
+    border-color: var(--teal);
+  }
+  .card:hover::after { opacity: 1; }
+  .card-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: grid; place-items: center; font-size: 28px;
+    background: var(--teal-soft); margin-bottom: 20px;
+  }
+  .card.two .card-icon { background: var(--coral-soft); }
+  .card.three .card-icon { background: #F3E8FF; }
+  .card-title {
+    font-size: 22px; font-weight: 700; color: var(--dark);
+    margin-bottom: 10px; letter-spacing: -0.01em;
+  }
+  .card-desc {
+    color: var(--muted); font-size: 14px; line-height: 1.6;
+    margin-bottom: 20px; flex: 1;
+  }
+  .card-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--teal); font-weight: 700; font-size: 14px;
+    transition: gap 0.2s; position: relative; z-index: 1;
+  }
+  .card:hover .card-cta { gap: 10px; }
+  .card.two .card-cta { color: var(--coral); }
+  .card.three .card-cta { color: #8B5CF6; }
+
+  .signature {
+    text-align: center; padding: 48px 0 12px;
+    color: var(--muted); font-size: 13px; margin-top: 32px;
+    border-top: 1px solid var(--gray-border);
+  }
+  .signature strong { color: var(--dark); font-weight: 600; }
+
+  /* ============================================================
+     VIEW HEADER (shared by all sub-views)
+     ============================================================ */
+  .view-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--gray-border);
+    padding: 14px 24px;
+  }
+  .view-header-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .back-link {
+    color: var(--muted); font-size: 14px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .back-link:hover { color: var(--teal); }
+  .header-title {
+    font-size: 13px; color: var(--dark); font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .header-meta {
+    font-size: 12px; color: var(--muted);
+    letter-spacing: 0.06em; font-weight: 600;
+  }
+
+  /* ============================================================
+     BIDIRECTIONAL VIEW
+     ============================================================ */
+  .bidir-container {
+    max-width: 1200px; margin: 0 auto; padding: 32px 24px 120px;
+  }
+  .bidir-intro {
+    background: var(--teal-tint); border-left: 4px solid var(--teal);
+    border-radius: var(--radius); padding: 16px 22px; margin-bottom: 28px;
+    font-size: 14px; color: var(--dark);
+  }
+  .bidir-intro strong { color: var(--teal); font-weight: 700; }
+  .bidir-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  }
+  @media (max-width: 768px) {
+    .bidir-grid { grid-template-columns: 1fr; gap: 0; }
+    .pane.uzbek { display: none; }
+  }
+  .pane {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg); padding: 32px 28px;
+  }
+  .pane-label {
+    font-size: 11px; letter-spacing: 0.14em; font-weight: 700;
+    color: var(--muted); margin-bottom: 18px;
+  }
+  .pane.english .pane-label { color: var(--teal); }
+  .pane.uzbek .pane-label { color: var(--coral); }
+  .pane-title {
+    font-family: var(--serif);
+    font-size: 26px; font-weight: 600; line-height: 1.2;
+    margin-bottom: 8px; letter-spacing: -0.01em;
+  }
+  .pane-byline {
+    font-size: 13px; color: var(--muted); margin-bottom: 24px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--gray-border);
+  }
+  .pane-byline strong { color: var(--coral); font-weight: 700; }
+  .paragraph { margin-bottom: 20px; }
+  .paragraph:last-child { margin-bottom: 0; }
+  .sentence {
+    cursor: pointer;
+    padding: 1px 3px;
+    border-radius: 4px;
+    transition: background-color 0.15s, box-shadow 0.15s;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  .pane.uzbek .sentence { color: #2D3748; }
+  .sentence:hover { background: var(--highlight); }
+  .sentence.active {
+    background: var(--highlight-strong);
+    box-shadow: inset 0 -2px 0 var(--coral);
+  }
+  /* Mobile strip */
+  .mobile-strip {
+    display: none;
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.95);
+    color: var(--white);
+    padding: 20px 24px 24px;
+    font-size: 16px; line-height: 1.55;
+    z-index: 200;
+    transform: translateY(110%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    backdrop-filter: blur(8px);
+    max-height: 50vh; overflow-y: auto;
+  }
+  .mobile-strip.show { transform: translateY(0); }
+  .mobile-strip-label {
+    font-size: 10px; letter-spacing: 0.16em; font-weight: 700;
+    color: var(--coral); margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .mobile-strip-close {
+    position: absolute; top: 12px; right: 16px;
+    width: 28px; height: 28px;
+    border-radius: 50%; background: rgba(255, 255, 255, 0.15);
+    color: var(--white); font-size: 14px;
+    display: grid; place-items: center;
+  }
+  @media (max-width: 768px) {
+    .mobile-strip { display: block; }
+  }
+
+  /* ============================================================
+     COMPREHENSION VIEW
+     ============================================================ */
+  .comp-container {
+    max-width: 760px; margin: 0 auto; padding: 32px 24px 80px;
+  }
+  .comp-article {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg); padding: 36px 32px;
+    margin-bottom: 36px;
+  }
+  .comp-article h1 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 36px);
+    font-weight: 600; letter-spacing: -0.02em; line-height: 1.15;
+    margin-bottom: 10px;
+  }
+  .comp-article-byline {
+    font-size: 13px; color: var(--muted); margin-bottom: 24px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--gray-border);
+  }
+  .comp-article p {
+    font-size: 16px; line-height: 1.75;
+    margin-bottom: 18px;
+    color: var(--dark);
+  }
+  .comp-article p:last-child { margin-bottom: 0; }
+
+  .questions-title {
+    font-size: 20px; font-weight: 700; color: var(--dark);
+    margin-bottom: 4px;
+  }
+  .questions-sub {
+    color: var(--muted); font-size: 14px; margin-bottom: 24px;
+  }
+  .question {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius); padding: 22px;
+    margin-bottom: 14px;
+  }
+  .question-num {
+    font-size: 12px; font-weight: 700;
+    color: var(--coral); letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+  .question-prompt {
+    font-size: 16px; line-height: 1.55; font-weight: 600;
+    color: var(--dark); margin-bottom: 16px;
+  }
+  .option {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-border); border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer; transition: all 0.15s;
+    font-size: 15px;
+  }
+  .option:hover:not(.disabled) { border-color: var(--teal); background: var(--teal-tint); }
+  .option.selected {
+    border-color: var(--teal); background: var(--teal-soft);
+  }
+  .option-letter {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--gray-bg);
+    color: var(--muted);
+    font-weight: 700; font-size: 13px;
+    display: grid; place-items: center;
+  }
+  .option.selected .option-letter {
+    background: var(--teal); color: var(--white);
+  }
+  .option.correct {
+    border-color: var(--green); background: var(--green-soft);
+  }
+  .option.correct .option-letter {
+    background: var(--green); color: var(--white);
+  }
+  .option.wrong {
+    border-color: var(--red); background: var(--red-soft);
+  }
+  .option.wrong .option-letter {
+    background: var(--red); color: var(--white);
+  }
+  .option.disabled { cursor: default; }
+
+  .explanation {
+    display: none;
+    margin-top: 14px; padding: 14px;
+    border-radius: 10px; background: var(--teal-tint);
+    border-left: 3px solid var(--teal);
+    font-size: 14px; line-height: 1.6;
+  }
+  .explanation strong { color: var(--teal); font-weight: 700; }
+  .explanation.show { display: block; }
+
+  .comp-actions {
+    display: flex; gap: 12px; justify-content: center;
+    padding: 24px 0; margin-top: 12px;
+  }
+  .btn {
+    padding: 14px 32px; border-radius: var(--radius);
+    font-family: var(--font); font-weight: 700; font-size: 15px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--teal); color: var(--white); }
+  .btn-primary:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-secondary {
+    background: var(--white); color: var(--dark);
+    border: 1px solid var(--gray-border);
+  }
+  .btn-secondary:hover { border-color: var(--teal); color: var(--teal); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .score-panel {
+    display: none;
+    background: var(--white); border-radius: var(--radius-lg);
+    padding: 32px; margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--teal);
+    text-align: center;
+    animation: slideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .score-panel.show { display: block; }
+  .score-number {
+    font-size: 56px; font-weight: 800; color: var(--teal);
+    letter-spacing: -0.02em; line-height: 1; margin-bottom: 6px;
+  }
+  .score-label {
+    color: var(--muted); font-size: 12px; margin-bottom: 16px;
+    letter-spacing: 0.12em; font-weight: 700;
+  }
+  .score-bar {
+    height: 8px; background: var(--gray-border); border-radius: 100px;
+    overflow: hidden; margin: 14px auto 0; max-width: 320px;
+  }
+  .score-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--coral));
+    border-radius: 100px;
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============================================================
+     VOCABULARY VIEW
+     ============================================================ */
+  .vocab-container {
+    max-width: 760px; margin: 0 auto; padding: 32px 24px 80px;
+  }
+  .vocab-screen { animation: fadeIn 0.3s ease; }
+  .vocab-hero {
+    text-align: center; padding: 32px 0 40px;
+  }
+  .vocab-hero h1 {
+    font-size: clamp(32px, 5vw, 48px); font-weight: 800;
+    letter-spacing: -0.02em; margin-bottom: 14px;
+  }
+  .vocab-hero h1 .accent { color: #8B5CF6; }
+  .vocab-hero p {
+    color: var(--muted); font-size: 17px;
+    max-width: 500px; margin: 0 auto;
+  }
+  .vocab-mode-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 540px) { .vocab-mode-grid { grid-template-columns: 1fr; } }
+  .mode-card {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg); padding: 28px;
+    cursor: pointer; transition: all 0.25s;
+    text-align: left;
+  }
+  .mode-card:hover {
+    transform: translateY(-3px); box-shadow: var(--shadow-lg);
+    border-color: var(--teal);
+  }
+  .mode-card .mode-icon {
+    width: 52px; height: 52px; border-radius: 13px;
+    display: grid; place-items: center; font-size: 26px;
+    background: var(--teal-soft); margin-bottom: 16px;
+  }
+  .mode-card.test .mode-icon { background: var(--coral-soft); }
+  .mode-card h3 {
+    font-size: 20px; font-weight: 700; margin-bottom: 6px;
+  }
+  .mode-card p { color: var(--muted); font-size: 14px; }
+
+  .setup {
+    text-align: center; padding: 16px 0;
+  }
+  .setup-back {
+    color: var(--muted); font-size: 14px; font-weight: 600;
+    margin-bottom: 28px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .setup-back:hover { color: var(--teal); }
+  .setup-eyebrow {
+    display: inline-block; font-size: 12px; letter-spacing: 0.14em;
+    font-weight: 700; padding: 6px 14px; border-radius: 100px;
+    margin-bottom: 14px;
+  }
+  .setup.drill .setup-eyebrow { color: var(--teal); background: var(--teal-soft); }
+  .setup.test .setup-eyebrow { color: var(--coral); background: var(--coral-soft); }
+  .setup h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .setup p { color: var(--muted); font-size: 16px; margin-bottom: 28px; }
+
+  .target-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 28px;
+  }
+  @media (max-width: 540px) { .target-grid { grid-template-columns: repeat(2, 1fr); } }
+  .target-card {
+    padding: 22px 14px;
+    background: var(--white); border: 2px solid var(--gray-border);
+    border-radius: var(--radius); text-align: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .target-card:hover { border-color: var(--teal); transform: translateY(-2px); }
+  .target-card.selected { border-color: var(--teal); background: var(--teal-soft); }
+  .setup.test .target-card.selected { border-color: var(--coral); background: var(--coral-soft); }
+  .target-num { font-size: 28px; font-weight: 800; }
+  .target-label { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+  .start-btn {
+    width: 100%; padding: 16px 28px;
+    background: var(--teal); color: var(--white);
+    border-radius: var(--radius); font-weight: 700; font-size: 15px;
+    transition: all 0.2s;
+  }
+  .start-btn:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .setup.test .start-btn { background: var(--coral); }
+  .setup.test .start-btn:hover { background: #E04E54; }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Vocab quiz */
+  .vocab-quiz {
+    padding: 24px 0;
+  }
+  .vocab-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .progress-track {
+    flex: 1; height: 6px; background: var(--gray-border);
+    border-radius: 100px; overflow: hidden; margin: 0 16px;
+    max-width: 360px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--coral));
+    border-radius: 100px;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .progress-label {
+    font-size: 12px; color: var(--muted); font-weight: 600;
+    white-space: nowrap;
+  }
+  .exit-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%; display: grid; place-items: center;
+    color: var(--muted); font-size: 16px;
+    transition: background 0.15s;
+  }
+  .exit-btn:hover { background: var(--gray-bg); color: var(--dark); }
+
+  .vocab-question-card {
+    background: var(--white); border-radius: var(--radius-lg);
+    padding: 40px 32px; margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--teal);
+    text-align: center;
+  }
+  .vocab-question-label {
+    font-size: 12px; letter-spacing: 0.14em; font-weight: 700;
+    color: var(--muted); margin-bottom: 14px;
+  }
+  .vocab-question-word {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 700; color: var(--dark);
+    letter-spacing: -0.01em;
+  }
+
+  .vocab-options { display: flex; flex-direction: column; gap: 12px; }
+  .vocab-option {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--white); border: 2px solid var(--gray-border);
+    border-radius: var(--radius); padding: 18px 22px;
+    text-align: left; transition: all 0.18s;
+    font-size: 17px; color: var(--dark);
+    width: 100%; cursor: pointer;
+  }
+  .vocab-option:not(:disabled):hover {
+    border-color: var(--teal); background: var(--teal-tint);
+    transform: translateX(2px);
+  }
+  .vocab-option-badge {
+    flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--teal-soft); color: var(--teal);
+    font-weight: 700; font-size: 15px;
+    display: grid; place-items: center;
+  }
+  .vocab-option.selected { border-color: var(--teal); background: var(--teal-soft); }
+  .vocab-option.selected .vocab-option-badge { background: var(--teal); color: var(--white); }
+  .vocab-option.correct {
+    border-color: var(--green); background: var(--green-soft);
+  }
+  .vocab-option.correct .vocab-option-badge { background: var(--green); color: var(--white); }
+  .vocab-option.wrong-pick {
+    border-color: var(--red); background: var(--red-soft);
+  }
+  .vocab-option.wrong-pick .vocab-option-badge { background: var(--red); color: var(--white); }
+  .vocab-option.dimmed { opacity: 0.45; }
+  .vocab-option:disabled { cursor: default; }
+
+  .vocab-feedback {
+    margin-top: 20px; padding: 18px 22px;
+    border-radius: var(--radius);
+    animation: slideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .vocab-feedback.correct {
+    background: var(--green-soft); border-left: 4px solid var(--green);
+  }
+  .vocab-feedback.wrong {
+    background: var(--coral-soft); border-left: 4px solid var(--coral);
+  }
+  .vocab-feedback-title {
+    font-weight: 700; font-size: 13px; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .vocab-feedback.correct .vocab-feedback-title { color: var(--green); }
+  .vocab-feedback.wrong .vocab-feedback-title { color: var(--coral); }
+  .vocab-feedback-body { font-size: 15px; color: var(--dark); }
+  .vocab-feedback-body strong { font-weight: 700; }
+
+  .next-row {
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 16px; margin-top: 24px;
+  }
+  .hint { font-size: 13px; color: var(--muted); }
+  .next-btn {
+    padding: 12px 24px; background: var(--teal); color: var(--white);
+    border-radius: var(--radius); font-weight: 700; font-size: 14px;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .next-btn:hover { background: var(--teal-dark); transform: translateY(-1px); }
+  .kbd-hints {
+    text-align: center; margin-top: 24px;
+    font-size: 12px; color: var(--muted);
+  }
+  .kbd-hints kbd {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-bottom-width: 2px; border-radius: 4px;
+    padding: 2px 6px; font-family: inherit; font-size: 11px;
+    font-weight: 700; color: var(--dark); margin: 0 2px;
+  }
+  @media (max-width: 540px) { .kbd-hints { display: none; } }
+
+  /* Vocab results */
+  .vocab-results {
+    text-align: center; padding: 32px 0;
+  }
+  .vocab-results-emoji { font-size: 64px; margin-bottom: 12px; }
+  .vocab-results h1 {
+    font-size: clamp(32px, 5vw, 48px); font-weight: 800;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .vocab-results-sub { color: var(--muted); font-size: 17px; margin-bottom: 32px; }
+  .stats-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin: 0 auto 36px; max-width: 480px;
+  }
+  @media (max-width: 540px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .stats-row .stat:last-child { grid-column: 1 / -1; }
+  }
+  .stat {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius); padding: 20px 14px; text-align: center;
+  }
+  .stat-value {
+    font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px;
+  }
+  .stat-value.green { color: var(--green); }
+  .stat-value.coral { color: var(--coral); }
+  .stat-value.teal { color: var(--teal); }
+  .stat-label {
+    font-size: 11px; letter-spacing: 0.08em;
+    color: var(--muted); text-transform: uppercase; font-weight: 600;
+  }
+  .vocab-results-actions {
+    display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
+  }
+  .review-section { text-align: left; margin-top: 32px; }
+  .review-header {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin: 28px 0 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--gray-border);
+  }
+  .review-item {
+    background: var(--white); border: 1px solid var(--gray-border);
+    border-radius: var(--radius); padding: 18px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--coral);
+  }
+  .review-uz { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+  .review-line { font-size: 14px; margin-bottom: 4px; }
+  .review-line .lbl { color: var(--muted); font-weight: 600; margin-right: 8px; }
+  .review-line.you .val { color: var(--red); }
+  .review-line.correct .val { color: var(--green); font-weight: 600; }
+
+  /* Utility */
+  .hidden { display: none !important; }
+  .screen { animation: fadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- ===================== LANDING ===================== -->
+<div id="landing-view">
+  <div class="landing screen">
+    <div class="landing-header">
+      <div class="breadcrumb">
+        <strong>Reading Practice</strong> · Prepared by Mr. Khurshid
+      </div>
+      <span class="eyebrow">B2 · BOOK REVIEW</span>
+      <h1 class="article-title">Behind the scenes</h1>
+      <p class="article-sub">Natural history museums teach us about our world, but they aren't telling us the whole story.</p>
+      <p class="article-meta"><strong>Chris Stokel Walker</strong> · New Scientist · 28 June 2025</p>
+    </div>
+
+    <div class="card-grid">
+      <button class="card one" onclick="goto('bidirectional')">
+        <div class="card-icon">🔁</div>
+        <div class="card-title">Bidirectional Translation</div>
+        <div class="card-desc">Read the article side-by-side with the Uzbek translation. Hover or tap a sentence to highlight its match.</div>
+        <span class="card-cta">Start reading →</span>
+      </button>
+      <button class="card two" onclick="goto('comprehension')">
+        <div class="card-icon">📝</div>
+        <div class="card-title">Reading &amp; Comprehension</div>
+        <div class="card-desc">Read the full English text and answer 10 questions — 5 multiple choice and 5 True/False/Not Given.</div>
+        <span class="card-cta">Take the test →</span>
+      </button>
+      <button class="card three" onclick="goto('vocabulary')">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">Vocabulary</div>
+        <div class="card-desc">55 key words from the article. Drill mode to learn, test mode to check yourself.</div>
+        <span class="card-cta">Practice words →</span>
+      </button>
+    </div>
+
+    <div class="signature">Prepared by <strong>Mr. Khurshid</strong> · REGISTON LC</div>
+  </div>
+</div>
+
+<!-- ===================== BIDIRECTIONAL ===================== -->
+<div id="bidirectional-view" class="hidden">
+  <div class="view-header">
+    <div class="view-header-inner">
+      <a href="#" class="back-link" onclick="goLanding(event)">← Back to landing</a>
+      <span class="header-title">BIDIRECTIONAL TRANSLATION</span>
+      <span class="header-meta"></span>
+    </div>
+  </div>
+  <div class="bidir-container screen">
+    <div class="bidir-intro">
+      <strong>How to use this:</strong> On desktop, English and Uzbek are side-by-side. Hover over any sentence to highlight its translation. On mobile, tap a sentence — its translation appears at the bottom of the screen.
+    </div>
+    <div class="bidir-grid">
+      <div class="pane english">
+        <div class="pane-label">ENGLISH</div>
+        <h2 class="pane-title">Behind the scenes</h2>
+        <p class="pane-byline">Review of <strong>Nature's Memory</strong> by Jack Ashby (Allen Lane) · by Chris Stokel Walker</p>
+        <div id="bidir-english"></div>
+      </div>
+      <div class="pane uzbek">
+        <div class="pane-label">O'ZBEKCHA</div>
+        <h2 class="pane-title">Sahna ortida</h2>
+        <p class="pane-byline">Jek Eshbining <strong>"Tabiat xotirasi"</strong> kitobiga sharh (Allen Lane) · Kris Stokel Uoker</p>
+        <div id="bidir-uzbek"></div>
+      </div>
+    </div>
+  </div>
+  <div class="mobile-strip" id="mobile-strip">
+    <button class="mobile-strip-close" onclick="closeMobileStrip()">×</button>
+    <div class="mobile-strip-label">O'zbekcha tarjima</div>
+    <div id="mobile-strip-text"></div>
+  </div>
+</div>
+
+<!-- ===================== COMPREHENSION ===================== -->
+<div id="comprehension-view" class="hidden">
+  <div class="view-header">
+    <div class="view-header-inner">
+      <a href="#" class="back-link" onclick="goLanding(event)">← Back to landing</a>
+      <span class="header-title">READING &amp; COMPREHENSION</span>
+      <span class="header-meta" id="comp-counter"></span>
+    </div>
+  </div>
+  <div class="comp-container screen">
+    <article class="comp-article">
+      <h1>Behind the scenes</h1>
+      <p class="comp-article-byline">Review of <em>Nature's Memory</em> by Jack Ashby (Allen Lane) · by Chris Stokel Walker · <em>New Scientist</em>, 28 June 2025</p>
+      <div id="comp-article-body"></div>
+    </article>
+
+    <div class="score-panel" id="comp-score-panel">
+      <div class="score-number" id="comp-score-number">0 / 10</div>
+      <div class="score-label">YOUR SCORE</div>
+      <div class="score-bar"><div class="score-bar-fill" id="comp-score-bar"></div></div>
+    </div>
+
+    <div class="questions-title">Comprehension questions</div>
+    <p class="questions-sub">Answer all 10 questions, then click <strong>Check answers</strong>.</p>
+    <div id="comp-questions"></div>
+
+    <div class="comp-actions">
+      <button class="btn btn-primary" id="comp-check">Check answers</button>
+      <button class="btn btn-secondary hidden" id="comp-retry">Try again</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VOCABULARY ===================== -->
+<div id="vocabulary-view" class="hidden">
+  <div class="view-header">
+    <div class="view-header-inner">
+      <a href="#" class="back-link" onclick="goLanding(event)">← Back to landing</a>
+      <span class="header-title">VOCABULARY</span>
+      <span class="header-meta" id="vocab-counter"></span>
+    </div>
+  </div>
+  <div class="vocab-container">
+    <div id="vocab-stage"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+// Article: 22 sentences in 10 paragraphs, EN + UZ aligned
+const SENTENCES = [
+  // P1
+  {id:"s1", para:1, en:"MUSEUMS are strange things, Jack Ashby, assistant director of the University Museum of Zoology in Cambridge, UK, points out in his new book, Nature's Memory: Behind the scenes at the world's natural history museums.", uz:"Muzeylar — g'alati narsalar, deydi Buyuk Britaniyaning Kembrij universiteti Zoologiya muzeyi direktor o'rinbosari Jek Eshbi o'zining yangi kitobida — \"Tabiat xotirasi: dunyo tabiiy tarix muzeylari sahnasi ortida\"."},
+  {id:"s2", para:1, en:"They are signifiers of our society and natural records of our ecosystems and habitats, yes.", uz:"Ular bizning jamiyatimiz ramzlari va ekotizimlarimiz hamda yashash muhitimizning tabiiy yozuvlari — bu rost."},
+  {id:"s3", para:1, en:"But they are also deeply flawed and significantly skewed.", uz:"Ammo ular shu bilan birga chuqur nuqsonli va sezilarli darajada bir tomonlama."},
+  // P2
+  {id:"s4", para:2, en:"Museums, especially the natural history ones that Ashby focuses on in his book, were once seen as a giant taxonomy of everything that ever lived – and continues to live – on our planet.", uz:"Muzeylar, ayniqsa Eshbi kitobida diqqat qaratgan tabiiy tarix muzeylari, bir paytlar sayyoramizda yashagan — va yashayotgan — barcha mavjudotlarning ulkan tasnifi sifatida ko'rilgan."},
+  {id:"s5", para:2, en:"From flora to fauna, mammals to insects, the goal of early cataloguers was to document and present everything in our world to help us better understand it.", uz:"O'simliklardan hayvonlarga, sutemizuvchilardan hashoratlarga qadar — dastlabki kataloglovchilarning maqsadi dunyodagi barcha narsalarni hujjatlashtirish va taqdim etish orqali bizga uni yaxshiroq tushunishga yordam berish edi."},
+  // P3
+  {id:"s6", para:3, en:"That was then, and this is now.", uz:"Bu o'tmishda shunday edi, hozir esa boshqacha."},
+  {id:"s7", para:3, en:"Reality bites, as Ashby deftly shows in this engaging book, which persuasively casts a critical eye over the imperfections of museums and how they aren't what we have often thought them to be.", uz:"Haqiqat achchiq, va Eshbi buni o'zining qiziqarli kitobida mohirlik bilan ko'rsatib beradi — kitob muzeylardagi nuqsonlarga tanqidiy nazar tashlaydi va ular biz o'ylagandek emasligini ishonarli tarzda dalillaydi."},
+  {id:"s8", para:3, en:"For one thing, vast volumes of our natural history aren't actually on display in these institutions, but are consigned to dimly lit storerooms.", uz:"Jumladan, tabiiy tariximizning ulkan qismi aslida bu muassasalarda namoyish etilmaydi, balki xira yoritilgan omborlarda saqlanadi."},
+  // P4
+  {id:"s9", para:4, en:"We quickly learn how important the areas behind the velvet ropes and polished glass are: around 70,000 more species of flowering plants are believed to exist in the world than scientists have described, says Ashby, with around half of them probably already sitting in museum back catalogues waiting to be analysed.", uz:"Biz tezda baxmal arqonlar va silliq oynalar ortidagi joylar qanchalik muhim ekanini bilib olamiz: olimlar tasvirlab bergan turlardan tashqari, dunyoda yana taxminan 70 000 gulli o'simlik turi mavjudligi taxmin qilinadi, deydi Eshbi, va ularning yarmi allaqachon muzey orqa kataloglarida tahlil qilinishini kutib turibdi."},
+  // P5
+  {id:"s10", para:5, en:"His insights into how things work behind the scenes are some of the most arresting points in the book, as he describes how animal skeletons are stripped of their flesh for preservation and how insects are preserved and then pinned to display boards.", uz:"Uning sahna ortida ishlar qanday yuritilishi haqidagi mulohazalari kitobning eng e'tiborni jalb qiluvchi qismlaridan biridir: u hayvon skeletlari saqlash uchun go'shtdan qanday tozalanishini va hashoratlar qanday saqlanib, keyin namoyish taxtalariga qadalishini tasvirlab beradi."},
+  {id:"s11", para:5, en:"How taxidermy models are presented and why displayed frogs are rarely real (they shrivel up badly) are two more enlightening passages, as is a section on a premium glass-maker renowned for producing the most realistic recreations of flowers.", uz:"Taksidermiya modellari qanday taqdim etilishi va nima uchun namoyishdagi qurbaqalarning kamdan-kam haqiqiy bo'lishi (ular juda yomon qurib qoladi) — yana ikkita ma'lumotli boblar, shuningdek, gullarning eng haqiqiy nusxalarini yaratish bilan mashhur premium oyna ustasi haqidagi bo'lim ham."},
+  // P6
+  {id:"s12", para:6, en:"But there are even bigger issues at play than those 70,000 missing plants: the exhibits we file past on school trips as we formatively learn about our planet and its populations are biased.", uz:"Lekin yo'qolgan 70 000 o'simlikdan ham kattaroq muammolar bor: maktab ekskursiyalarida sayyoramiz va uning aholisi haqida o'rganish jarayonida yonidan o'tib ketadigan eksponatlar bir tomonlama."},
+  // P7
+  {id:"s13", para:7, en:"Ashby points to a 2008 case study that found just 29 per cent of mammals and 34 per cent of birds in the average natural history museum are female, vastly understating their contribution to habitats.", uz:"Eshbi 2008-yildagi tadqiqotga ishora qiladi — unga ko'ra o'rtacha tabiiy tarix muzeyidagi sutemizuvchilarning atigi 29 foizi va qushlarning 34 foizi urg'ochi bo'lib, bu ularning yashash muhitiga qo'shgan hissasini juda kichraytirib ko'rsatadi."},
+  {id:"s14", para:7, en:"In part, that is because the male of the species is often more decorative and lends itself better to being displayed.", uz:"Qisman buning sababi shuki, turlarning erkagi ko'pincha ko'rkamroq bo'ladi va namoyishga ko'proq mos keladi."},
+  {id:"s15", para:7, en:"However, it is also because the people who collect and display the items are invariably men – and white, Western men at that, says Ashby.", uz:"Biroq buning yana bir sababi shundaki, eksponatlarni yig'uvchi va namoyish etuvchi insonlar deyarli har doim erkaklar bo'lgan — va aniqrog'i, oq tanli, G'arblik erkaklar, deydi Eshbi."},
+  // P8
+  {id:"s16", para:8, en:"He is strongest in his rallying cry to change that problem of misrepresentation within museums.", uz:"U muzeylardagi noto'g'ri taqdim etish muammosini o'zgartirishga chaqirgan o'rinlarida eng kuchli ko'rinadi."},
+  {id:"s17", para:8, en:"Ashby makes a compelling case that we have all been badly educated about our world and nature because of the squeamishness and the proclivities of past generations.", uz:"Eshbi shunday ishonarli fikrni ilgari suradi: o'tgan avlodlarning andishasi va moyilligi tufayli barchamiz dunyo va tabiat haqida noto'g'ri ta'lim olganmiz."},
+  {id:"s18", para:8, en:"Most male mammal skeletons differ from humans in one significant way: the presence of a baculum, or penis bone – not that you would know it from the displays in most museums worldwide, thanks to prudish curators who simply removed the bone from the pelvis.", uz:"Aksariyat erkak sutemizuvchilar skeletlari odamlardan bitta muhim jihatda farq qiladi: ularda bakulum (jinsiy suyak) mavjud — biroq dunyo bo'ylab ko'pchilik muzeylardagi namoyishlardan buni bilib olmaysiz, chunki andishali kuratorlar bu suyakni chanoq sohasidan oddiygina olib tashlashgan."},
+  // P9
+  {id:"s19", para:9, en:"This book was written before the wilful destruction of scientific institutions in the US, but in the fug of a general anti-expert malaise – and it shows.", uz:"Bu kitob AQShdagi ilmiy muassasalarning ataylab buzilishidan oldin yozilgan, ammo umumiy ekspertlarga qarshi kayfiyat doirasida — va bu sezilib turadi."},
+  {id:"s20", para:9, en:"It is for this reason that it ought to be read.", uz:"Aynan shu sababdan ham uni o'qish kerak."},
+  {id:"s21", para:9, en:"We must consider the consequences of what is left out of museum displays just as much as we do for what is kept in.", uz:"Muzey namoyishlarida nima qoldirilganini o'ylab ko'rganimiz kabi, nima chiqarib tashlanganini ham xuddi shunday e'tibor bilan ko'rib chiqishimiz kerak."},
+  // P10
+  {id:"s22", para:10, en:"As Ashby puts it: \"The work taking place in natural history museums has never been more important, and the role they have to play in safeguarding humanity's future is only just starting to be realised.\"", uz:"Eshbining o'zi ta'kidlaganidek: \"Tabiiy tarix muzeylaridagi ishlar hech qachon hozirgidek muhim bo'lmagan, va ularning insoniyat kelajagini muhofaza qilishdagi roli hozirgina anglab borilmoqda.\""},
+];
+
+// Comprehension questions: 5 MC + 5 T/F/NG
+const QUESTIONS = [
+  // Multiple choice
+  {type:"mc", question:"What is the main argument Jack Ashby makes in his book?",
+   options:["Natural history museums should be funded more by the government", "Natural history museums present an incomplete and biased view of nature", "Museums should focus more on plants than on animals", "Museums need to display more skeletons to be useful"],
+   correct:1,
+   explanation:"The article says the book 'persuasively casts a critical eye over the imperfections of museums' and shows they are 'deeply flawed and significantly skewed.'"},
+  {type:"mc", question:"How many more species of flowering plants does Ashby suggest may exist beyond what scientists have described?",
+   options:["Around 7,000", "Around 29,000", "Around 34,000", "Around 70,000"],
+   correct:3,
+   explanation:"'Around 70,000 more species of flowering plants are believed to exist in the world than scientists have described.'"},
+  {type:"mc", question:"According to the 2008 case study, what percentage of birds in average natural history museums are female?",
+   options:["29%", "34%", "50%", "70%"],
+   correct:1,
+   explanation:"The article says 'just 29 per cent of mammals and 34 per cent of birds in the average natural history museum are female.' The figure for birds is 34%."},
+  {type:"mc", question:"Why does the author say museum displays are biased toward male specimens?",
+   options:["Female animals are rarer and harder to capture", "Male animals are often more decorative, and historically the collectors were men", "Female animals decay more quickly during preservation", "Scientific journals require more male specimens"],
+   correct:1,
+   explanation:"'The male of the species is often more decorative...' and 'the people who collect and display the items are invariably men.'"},
+  {type:"mc", question:"What does the author suggest readers should think about regarding museums?",
+   options:["Only what is on display", "The cost of running them", "What is missing from displays, not just what is shown", "The architectural design of buildings"],
+   correct:2,
+   explanation:"'We must consider the consequences of what is left out of museum displays just as much as we do for what is kept in.'"},
+  // True / False / Not Given
+  {type:"tfng", question:"Jack Ashby is the assistant director of the University Museum of Zoology in Cambridge.",
+   options:["True", "False", "Not Given"],
+   correct:0,
+   explanation:"Directly stated in paragraph 1: 'Jack Ashby, assistant director of the University Museum of Zoology in Cambridge, UK...'"},
+  {type:"tfng", question:"Frogs that appear in museum displays are usually real preserved specimens.",
+   options:["True", "False", "Not Given"],
+   correct:1,
+   explanation:"The article says 'displayed frogs are rarely real (they shrivel up badly).' So this statement is FALSE."},
+  {type:"tfng", question:"The book was written after major scientific institutions in the US were dismantled.",
+   options:["True", "False", "Not Given"],
+   correct:1,
+   explanation:"FALSE. The article explicitly says: 'This book was written before the wilful destruction of scientific institutions in the US.'"},
+  {type:"tfng", question:"Jack Ashby has personally visited natural history museums in many different countries.",
+   options:["True", "False", "Not Given"],
+   correct:2,
+   explanation:"NOT GIVEN. The article mentions museums 'worldwide' but never states whether Ashby personally visited them in different countries."},
+  {type:"tfng", question:"Most natural history museum exhibits show more male than female specimens.",
+   options:["True", "False", "Not Given"],
+   correct:0,
+   explanation:"TRUE. The 2008 case study cited says only 29% of mammals and 34% of birds in museums are female, meaning the majority are male."},
+];
+
+// Vocabulary: 55 words pulled from the article, with Uzbek translations
+const VOCAB = [
+  {en:"museum", uz:"muzey"},
+  {en:"assistant director", uz:"direktor o'rinbosari"},
+  {en:"signifier", uz:"ramz, belgi"},
+  {en:"ecosystem", uz:"ekotizim"},
+  {en:"habitat", uz:"yashash muhiti"},
+  {en:"flawed", uz:"nuqsonli, kamchilikli"},
+  {en:"skewed", uz:"bir tomonlama, noxolis"},
+  {en:"taxonomy", uz:"tasnif, taksonomiya"},
+  {en:"flora", uz:"o'simlik dunyosi, flora"},
+  {en:"fauna", uz:"hayvonot dunyosi, fauna"},
+  {en:"mammal", uz:"sutemizuvchi"},
+  {en:"cataloguer", uz:"kataloglovchi, tasnifchi"},
+  {en:"document (verb)", uz:"hujjatlashtirmoq"},
+  {en:"engaging", uz:"qiziqarli, e'tiborni jalb qiluvchi"},
+  {en:"persuasively", uz:"ishonarli tarzda"},
+  {en:"critical eye", uz:"tanqidiy nazar"},
+  {en:"imperfection", uz:"nuqson, kamchilik"},
+  {en:"consign", uz:"yuborib qo'ymoq, topshirmoq"},
+  {en:"dimly lit", uz:"xira yoritilgan"},
+  {en:"storeroom", uz:"ombor, saqlash xonasi"},
+  {en:"velvet rope", uz:"baxmal arqon"},
+  {en:"species", uz:"tur"},
+  {en:"catalogue", uz:"katalog"},
+  {en:"analyse", uz:"tahlil qilmoq"},
+  {en:"insight", uz:"mulohaza, ichki tushuncha"},
+  {en:"arresting", uz:"e'tiborni jalb qiluvchi"},
+  {en:"skeleton", uz:"skelet"},
+  {en:"strip (verb)", uz:"tozalamoq, yechib olmoq"},
+  {en:"flesh", uz:"go'sht"},
+  {en:"preservation", uz:"saqlash, konservatsiya"},
+  {en:"preserved", uz:"saqlangan"},
+  {en:"pinned", uz:"qadalgan"},
+  {en:"taxidermy", uz:"taksidermiya, hayvon tulupi yasash"},
+  {en:"shrivel up", uz:"qurib qolmoq, g'ijimlanmoq"},
+  {en:"enlightening", uz:"ma'lumotli, ochuvchi"},
+  {en:"premium", uz:"oliy sifatli, eng yaxshi"},
+  {en:"renowned", uz:"mashhur, taniqli"},
+  {en:"recreation", uz:"qayta yaratish, nusxa"},
+  {en:"exhibit", uz:"eksponat, namoyish predmeti"},
+  {en:"formatively", uz:"shakllantiruvchi tarzda"},
+  {en:"biased", uz:"bir tomonlama, noxolis"},
+  {en:"case study", uz:"tadqiqot, holat o'rganishi"},
+  {en:"understate", uz:"kichraytirib ko'rsatmoq"},
+  {en:"contribution", uz:"hissa"},
+  {en:"decorative", uz:"ko'rkam, bezakli"},
+  {en:"invariably", uz:"har doim, doimo"},
+  {en:"rallying cry", uz:"chaqiriq, da'vat"},
+  {en:"misrepresentation", uz:"noto'g'ri taqdim etish"},
+  {en:"compelling", uz:"ishonarli, ta'sirli"},
+  {en:"squeamishness", uz:"andisha, jirkanish"},
+  {en:"proclivity", uz:"moyillik, tabiiy mayl"},
+  {en:"prudish", uz:"andishali, uyatchan"},
+  {en:"curator", uz:"kurator, muzey xodimi"},
+  {en:"wilful", uz:"ataylab qilingan, qasddan"},
+  {en:"malaise", uz:"nochorlik, kasallik holati"},
+  {en:"consequence", uz:"oqibat"},
+  {en:"safeguard", uz:"muhofaza qilmoq"},
+];
+
+// ============================================================
+// ROUTING
+// ============================================================
+function goto(view) { location.hash = view; }
+function goLanding(e) { if (e) e.preventDefault(); location.hash = ''; }
+
+function handleRoute() {
+  const hash = location.hash.replace('#','');
+  ['landing','bidirectional','comprehension','vocabulary'].forEach(v => {
+    const el = document.getElementById(v + '-view');
+    if (!el) return;
+    if ((!hash && v === 'landing') || hash === v) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  });
+  if (hash === 'bidirectional') renderBidirectional();
+  else if (hash === 'comprehension') renderComprehension();
+  else if (hash === 'vocabulary') vocabGoStart();
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', handleRoute);
+
+// ============================================================
+// BIDIRECTIONAL
+// ============================================================
+function renderBidirectional() {
+  const enContainer = document.getElementById('bidir-english');
+  const uzContainer = document.getElementById('bidir-uzbek');
+
+  // Group by paragraph
+  const paragraphs = {};
+  SENTENCES.forEach(s => {
+    if (!paragraphs[s.para]) paragraphs[s.para] = [];
+    paragraphs[s.para].push(s);
+  });
+
+  let enHtml = '', uzHtml = '';
+  Object.keys(paragraphs).sort((a,b)=>a-b).forEach(p => {
+    enHtml += '<p class="paragraph">';
+    uzHtml += '<p class="paragraph">';
+    paragraphs[p].forEach((s, i) => {
+      if (i > 0) { enHtml += ' '; uzHtml += ' '; }
+      enHtml += `<span class="sentence" data-id="${s.id}">${escapeHtml(s.en)}</span>`;
+      uzHtml += `<span class="sentence" data-id="${s.id}">${escapeHtml(s.uz)}</span>`;
+    });
+    enHtml += '</p>';
+    uzHtml += '</p>';
+  });
+  enContainer.innerHTML = enHtml;
+  uzContainer.innerHTML = uzHtml;
+
+  // Hover / tap interactions
+  const sentences = document.querySelectorAll('.sentence');
+  sentences.forEach(s => {
+    s.addEventListener('mouseenter', () => activateSentence(s.dataset.id));
+    s.addEventListener('mouseleave', () => deactivateSentences());
+    s.addEventListener('click', () => {
+      // On mobile: toggle (re-tap closes), on desktop also OK
+      const isActive = s.classList.contains('active');
+      deactivateSentences();
+      if (!isActive) activateSentence(s.dataset.id);
+    });
+  });
+}
+
+function activateSentence(id) {
+  document.querySelectorAll('.sentence').forEach(s => {
+    s.classList.toggle('active', s.dataset.id === id);
+  });
+  // Mobile strip
+  if (window.innerWidth <= 768) {
+    const sent = SENTENCES.find(x => x.id === id);
+    if (sent) {
+      document.getElementById('mobile-strip-text').textContent = sent.uz;
+      document.getElementById('mobile-strip').classList.add('show');
+    }
+  }
+}
+function deactivateSentences() {
+  // Only auto-deactivate on desktop (hover behavior).
+  // On mobile we keep the strip until user closes it.
+  if (window.innerWidth > 768) {
+    document.querySelectorAll('.sentence.active').forEach(s => s.classList.remove('active'));
+  }
+}
+function closeMobileStrip() {
+  document.getElementById('mobile-strip').classList.remove('show');
+  document.querySelectorAll('.sentence.active').forEach(s => s.classList.remove('active'));
+}
+
+// ============================================================
+// COMPREHENSION
+// ============================================================
+let compState = { answers: {}, checked: false };
+
+function renderComprehension() {
+  // Render article body
+  const body = document.getElementById('comp-article-body');
+  const paragraphs = {};
+  SENTENCES.forEach(s => {
+    if (!paragraphs[s.para]) paragraphs[s.para] = [];
+    paragraphs[s.para].push(s);
+  });
+  body.innerHTML = Object.keys(paragraphs).sort((a,b)=>a-b)
+    .map(p => '<p>' + paragraphs[p].map(s => escapeHtml(s.en)).join(' ') + '</p>').join('');
+
+  // Render questions
+  const qContainer = document.getElementById('comp-questions');
+  qContainer.innerHTML = QUESTIONS.map((q, i) => `
+    <div class="question" data-q="${i}">
+      <div class="question-num">QUESTION ${i+1} · ${q.type === 'mc' ? 'MULTIPLE CHOICE' : 'TRUE / FALSE / NOT GIVEN'}</div>
+      <div class="question-prompt">${escapeHtml(q.question)}</div>
+      <div class="options">
+        ${q.options.map((opt, j) => `
+          <div class="option" data-q="${i}" data-opt="${j}" onclick="pickComp(${i}, ${j})">
+            <span class="option-letter">${q.type === 'mc' ? String.fromCharCode(65+j) : (j===0?'T':j===1?'F':'NG')}</span>
+            <span class="option-text">${escapeHtml(opt)}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="explanation" data-q="${i}"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('comp-counter').textContent = `10 QUESTIONS`;
+  compState = { answers: {}, checked: false };
+  document.getElementById('comp-score-panel').classList.remove('show');
+  document.getElementById('comp-check').classList.remove('hidden');
+  document.getElementById('comp-retry').classList.add('hidden');
+}
+
+function pickComp(qIdx, optIdx) {
+  if (compState.checked) return;
+  compState.answers[qIdx] = optIdx;
+  const questionEl = document.querySelector(`.question[data-q="${qIdx}"]`);
+  questionEl.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  questionEl.querySelector(`.option[data-opt="${optIdx}"]`).classList.add('selected');
+}
+
+document.getElementById('comp-check').addEventListener('click', () => {
+  let correct = 0;
+  QUESTIONS.forEach((q, i) => {
+    const ans = compState.answers[i];
+    const questionEl = document.querySelector(`.question[data-q="${i}"]`);
+    questionEl.querySelectorAll('.option').forEach((o, j) => {
+      o.classList.add('disabled');
+      o.classList.remove('selected');
+      if (j === q.correct) o.classList.add('correct');
+      else if (j === ans) o.classList.add('wrong');
+    });
+    questionEl.querySelector('.explanation').classList.add('show');
+    if (ans === q.correct) correct++;
+  });
+  compState.checked = true;
+  const total = QUESTIONS.length;
+  const pct = Math.round((correct/total)*100);
+  document.getElementById('comp-score-number').textContent = `${correct} / ${total}`;
+  document.getElementById('comp-score-bar').style.width = pct + '%';
+  document.getElementById('comp-score-panel').classList.add('show');
+  document.getElementById('comp-check').classList.add('hidden');
+  document.getElementById('comp-retry').classList.remove('hidden');
+  document.getElementById('comp-score-panel').scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('comp-retry').addEventListener('click', () => {
+  renderComprehension();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+});
+
+// ============================================================
+// VOCABULARY
+// ============================================================
+let vocabState = {
+  screen: 'start', // 'start' | 'setup' | 'quiz' | 'results'
+  mode: null,      // 'drill' | 'test'
+  target: null,
+  queue: [],
+  total: 0,
+  mastered: 0,
+  attempts: 0,
+  startTime: null,
+  current: null,
+  selectedIndex: null,
+  isAnswered: false,
+  wasCorrect: null,
+  // test mode
+  testAnswers: [],
+  testIndex: 0,
+};
+
+function vocabGoStart() {
+  vocabState.screen = 'start';
+  renderVocab();
+}
+
+function renderVocab() {
+  const stage = document.getElementById('vocab-stage');
+  if (vocabState.screen === 'start') {
+    stage.innerHTML = `
+      <div class="vocab-screen">
+        <div class="vocab-hero">
+          <h1>Vocabulary <span class="accent">practice</span></h1>
+          <p>55 key words from the article. Pick your mode.</p>
+        </div>
+        <div class="vocab-mode-grid">
+          <button class="mode-card drill" onclick="vocabSetMode('drill')">
+            <div class="mode-icon">⚡</div>
+            <h3>Drill Mode</h3>
+            <p>Master words one by one. Wrong answers come back until you nail them.</p>
+          </button>
+          <button class="mode-card test" onclick="vocabSetMode('test')">
+            <div class="mode-icon">📋</div>
+            <h3>Test Mode</h3>
+            <p>One pass through the words. See your final score at the end.</p>
+          </button>
+        </div>
+      </div>`;
+  } else if (vocabState.screen === 'setup') {
+    const isDrill = vocabState.mode === 'drill';
+    stage.innerHTML = `
+      <div class="setup vocab-screen ${isDrill ? 'drill' : 'test'}">
+        <button class="setup-back" onclick="vocabGoStart()">← Back</button>
+        <div><span class="setup-eyebrow">${isDrill ? '⚡ DRILL MODE' : '📋 TEST MODE'}</span></div>
+        <h1>${isDrill ? 'How many words to master?' : 'How many words in the test?'}</h1>
+        <p>${isDrill ? "You'll keep going until you've answered each one correctly." : "One try per word. Get them right in one pass."}</p>
+        <div class="target-grid" id="vocab-target-grid">
+          ${[10, 20, 50, VOCAB.length].map(n => `
+            <button class="target-card" data-n="${n}" onclick="vocabPickTarget(${n})">
+              <div class="target-num">${n}</div>
+              <div class="target-label">${n === VOCAB.length ? 'All' : 'Words'}</div>
+            </button>
+          `).join('')}
+        </div>
+        <button class="start-btn" id="vocab-start-btn" onclick="vocabStartSession()" disabled>Start →</button>
+      </div>`;
+  } else if (vocabState.screen === 'quiz') {
+    renderVocabQuiz();
+  } else if (vocabState.screen === 'results') {
+    renderVocabResults();
+  }
+}
+
+function vocabSetMode(mode) {
+  vocabState.mode = mode;
+  vocabState.screen = 'setup';
+  vocabState.target = null;
+  renderVocab();
+}
+function vocabPickTarget(n) {
+  vocabState.target = n;
+  document.querySelectorAll('#vocab-target-grid .target-card').forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.n) === n);
+  });
+  document.getElementById('vocab-start-btn').disabled = false;
+}
+function vocabStartSession() {
+  if (!vocabState.target) return;
+  const sampled = shuffle(VOCAB).slice(0, vocabState.target);
+  vocabState.queue = sampled.map(v => buildVocabQuestion(v));
+  vocabState.total = vocabState.target;
+  vocabState.mastered = 0;
+  vocabState.attempts = 0;
+  vocabState.startTime = Date.now();
+  vocabState.testAnswers = [];
+  vocabState.testIndex = 0;
+  vocabState.current = vocabState.queue.shift();
+  vocabState.selectedIndex = null;
+  vocabState.isAnswered = false;
+  vocabState.wasCorrect = null;
+  vocabState.screen = 'quiz';
+  renderVocab();
+}
+
+function buildVocabQuestion(target) {
+  // Show UZ, pick EN
+  // 1 correct + 2 random distractors
+  const distractors = shuffle(VOCAB.filter(v => v.en !== target.en)).slice(0, 2);
+  const options = shuffle([target.en, distractors[0].en, distractors[1].en]);
+  return {
+    prompt: target.uz,
+    options: options,
+    correctIndex: options.indexOf(target.en),
+    sourceEn: target.en,
+    sourceUz: target.uz,
+  };
+}
+
+function renderVocabQuiz() {
+  const q = vocabState.current;
+  let progressFraction, progressLabel;
+  if (vocabState.mode === 'drill') {
+    progressFraction = vocabState.mastered / vocabState.total;
+    progressLabel = `${vocabState.mastered} / ${vocabState.total} mastered`;
+  } else {
+    progressFraction = vocabState.testIndex / vocabState.total;
+    progressLabel = `Question ${vocabState.testIndex + 1} of ${vocabState.total}`;
+  }
+
+  const optionsHtml = q.options.map((opt, i) => {
+    let cls = 'vocab-option';
+    if (vocabState.mode === 'test' && vocabState.selectedIndex === i && !vocabState.isAnswered) cls += ' selected';
+    if (vocabState.mode === 'drill' && vocabState.isAnswered) {
+      if (i === q.correctIndex) cls += ' correct';
+      else if (i === vocabState.selectedIndex) cls += ' wrong-pick';
+      else cls += ' dimmed';
+    }
+    return `
+      <button class="${cls}" onclick="pickVocabOption(${i})" ${vocabState.isAnswered ? 'disabled' : ''}>
+        <span class="vocab-option-badge">${String.fromCharCode(65+i)}</span>
+        <span class="vocab-option-text">${escapeHtml(opt)}</span>
+      </button>`;
+  }).join('');
+
+  let feedbackHtml = '';
+  if (vocabState.mode === 'drill' && vocabState.isAnswered) {
+    if (vocabState.wasCorrect) {
+      feedbackHtml = `
+        <div class="vocab-feedback correct">
+          <div class="vocab-feedback-title">✓ To'g'ri!</div>
+          <div class="vocab-feedback-body"><strong>${escapeHtml(q.sourceUz)}</strong> = <strong>${escapeHtml(q.sourceEn)}</strong></div>
+        </div>`;
+    } else {
+      feedbackHtml = `
+        <div class="vocab-feedback wrong">
+          <div class="vocab-feedback-title">✗ Noto'g'ri</div>
+          <div class="vocab-feedback-body">To'g'ri javob: <strong>${escapeHtml(q.sourceEn)}</strong></div>
+        </div>`;
+    }
+  }
+
+  const showNext = (vocabState.mode === 'drill' && vocabState.isAnswered) || (vocabState.mode === 'test' && vocabState.selectedIndex !== null);
+  const nextLabel = vocabState.mode === 'test' && vocabState.testIndex === vocabState.total - 1 ? 'Finish' : 'Next';
+
+  const stage = document.getElementById('vocab-stage');
+  stage.innerHTML = `
+    <div class="vocab-quiz vocab-screen">
+      <div class="vocab-topbar">
+        <span class="progress-label">${vocabState.mode === 'drill' ? 'DRILL' : 'TEST'}</span>
+        <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, progressFraction*100)}%"></div></div>
+        <span class="progress-label">${progressLabel}</span>
+        <button class="exit-btn" onclick="vocabExit()" title="Exit">✕</button>
+      </div>
+      <div class="vocab-question-card">
+        <div class="vocab-question-label">PICK THE ENGLISH WORD FOR:</div>
+        <div class="vocab-question-word">${escapeHtml(q.prompt)}</div>
+      </div>
+      <div class="vocab-options">${optionsHtml}</div>
+      ${feedbackHtml}
+      <div class="next-row">
+        ${showNext ? `<span class="hint">Press <kbd>Enter</kbd></span><button class="next-btn" onclick="vocabGoNext()">${nextLabel} →</button>` : ''}
+      </div>
+      <div class="kbd-hints">
+        Shortcuts: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> to pick · <kbd>Enter</kbd> to continue · <kbd>Esc</kbd> to exit
+      </div>
+    </div>`;
+}
+
+function pickVocabOption(i) {
+  if (vocabState.isAnswered) return;
+  if (vocabState.mode === 'drill') {
+    vocabState.selectedIndex = i;
+    vocabState.isAnswered = true;
+    vocabState.wasCorrect = (i === vocabState.current.correctIndex);
+    vocabState.attempts++;
+    if (vocabState.wasCorrect) {
+      vocabState.mastered++;
+    } else {
+      vocabState.queue.push(vocabState.current);
+    }
+    renderVocab();
+  } else {
+    vocabState.selectedIndex = i;
+    renderVocab();
+  }
+}
+
+function vocabGoNext() {
+  if (vocabState.mode === 'drill') {
+    if (vocabState.mastered >= vocabState.total || vocabState.queue.length === 0) {
+      vocabState.screen = 'results';
+      renderVocab();
+      return;
+    }
+    vocabState.current = vocabState.queue.shift();
+    vocabState.selectedIndex = null;
+    vocabState.isAnswered = false;
+    vocabState.wasCorrect = null;
+    renderVocab();
+  } else {
+    if (vocabState.selectedIndex === null) return;
+    vocabState.testAnswers.push({
+      q: vocabState.current,
+      selected: vocabState.selectedIndex,
+    });
+    if (vocabState.testIndex === vocabState.total - 1) {
+      vocabState.screen = 'results';
+      renderVocab();
+      return;
+    }
+    vocabState.testIndex++;
+    vocabState.current = vocabState.queue[vocabState.testIndex];
+    vocabState.selectedIndex = null;
+    renderVocab();
+  }
+}
+
+function vocabExit() {
+  if (confirm('Exit the session? Your progress will be lost.')) {
+    vocabGoStart();
+  }
+}
+
+function renderVocabResults() {
+  const stage = document.getElementById('vocab-stage');
+  if (vocabState.mode === 'drill') {
+    const elapsed = Math.floor((Date.now() - vocabState.startTime) / 1000);
+    const m = Math.floor(elapsed/60), s = elapsed % 60;
+    stage.innerHTML = `
+      <div class="vocab-results vocab-screen">
+        <div class="vocab-results-emoji">🎉</div>
+        <h1>Done!</h1>
+        <p class="vocab-results-sub">You mastered all ${vocabState.total} words.</p>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-value coral">${vocabState.total}</div><div class="stat-label">Mastered</div></div>
+          <div class="stat"><div class="stat-value teal">${vocabState.attempts}</div><div class="stat-label">Attempts</div></div>
+          <div class="stat"><div class="stat-value">${m}:${s.toString().padStart(2,'0')}</div><div class="stat-label">Time</div></div>
+        </div>
+        <div class="vocab-results-actions">
+          <button class="btn btn-primary" onclick="vocabSetMode('drill')">Try another drill</button>
+          <button class="btn btn-secondary" onclick="goLanding()">Back to landing</button>
+        </div>
+      </div>`;
+  } else {
+    const total = vocabState.testAnswers.length;
+    const correct = vocabState.testAnswers.filter(a => a.selected === a.q.correctIndex).length;
+    const wrongList = vocabState.testAnswers.filter(a => a.selected !== a.q.correctIndex);
+    const pct = total > 0 ? Math.round((correct/total)*100) : 0;
+    const emoji = pct === 100 ? '🏆' : pct >= 70 ? '👏' : '💪';
+    const reviewHtml = wrongList.length > 0 ? `
+      <div class="review-section">
+        <div class="review-header">Review · ${wrongList.length} to revisit</div>
+        ${wrongList.map(a => `
+          <div class="review-item">
+            <div class="review-uz">${escapeHtml(a.q.sourceUz)}</div>
+            <div class="review-line you"><span class="lbl">YOU PICKED</span><span class="val">${escapeHtml(a.q.options[a.selected])}</span></div>
+            <div class="review-line correct"><span class="lbl">CORRECT</span><span class="val">${escapeHtml(a.q.sourceEn)}</span></div>
+          </div>
+        `).join('')}
+      </div>` : `<div class="review-header" style="text-align:center;border:none;color:var(--green);margin-top:24px;">🎯 Perfect score — nothing to review!</div>`;
+    stage.innerHTML = `
+      <div class="vocab-results vocab-screen">
+        <div class="vocab-results-emoji">${emoji}</div>
+        <h1>${correct} / ${total}</h1>
+        <p class="vocab-results-sub">${pct}% correct</p>
+        <div class="stats-row">
+          <div class="stat"><div class="stat-value green">${correct}</div><div class="stat-label">Correct</div></div>
+          <div class="stat"><div class="stat-value coral">${wrongList.length}</div><div class="stat-label">Wrong</div></div>
+          <div class="stat"><div class="stat-value teal">${pct}%</div><div class="stat-label">Score</div></div>
+        </div>
+        <div class="vocab-results-actions">
+          <button class="btn btn-primary" onclick="vocabSetMode('test')">Try another test</button>
+          <button class="btn btn-secondary" onclick="goLanding()">Back to landing</button>
+        </div>
+        ${reviewHtml}
+      </div>`;
+  }
+}
+
+// ============================================================
+// Utility
+// ============================================================
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Keyboard for vocab
+document.addEventListener('keydown', (e) => {
+  if (location.hash !== '#vocabulary') return;
+  if (vocabState.screen !== 'quiz') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === '1' || e.key.toLowerCase() === 'a') { e.preventDefault(); pickVocabOption(0); }
+  else if (e.key === '2' || e.key.toLowerCase() === 'b') { e.preventDefault(); pickVocabOption(1); }
+  else if (e.key === '3' || e.key.toLowerCase() === 'c') { e.preventDefault(); pickVocabOption(2); }
+  else if (e.key === 'Enter') {
+    const showNext = (vocabState.mode === 'drill' && vocabState.isAnswered) || (vocabState.mode === 'test' && vocabState.selectedIndex !== null);
+    if (showNext) { e.preventDefault(); vocabGoNext(); }
+  }
+  else if (e.key === 'Escape') { e.preventDefault(); vocabExit(); }
+});
+
+// Init
+handleRoute();
+</script>
+</body>
+</html>
