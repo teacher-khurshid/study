@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Listening Part 1 · Practice Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:      #065A82;
+    --teal-dark: #043F5C;
+    --teal-soft: #E3EEF3;
+    --teal-tint: #F0F7FA;
+    --coral:     #F96167;
+    --coral-soft:#FDE6E7;
+    --green:     #10B981;
+    --green-soft:#D1FAE5;
+    --red:       #DC2626;
+    --red-soft:  #FEE2E2;
+    --dark:      #1F2A3D;
+    --muted:     #6B7280;
+    --gray-border:#E5E7EB;
+    --gray-bg:   #F9FAFB;
+    --white:     #FFFFFF;
+
+    --font: 'Manrope', 'Calibri', 'Helvetica Neue', Arial, sans-serif;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow:    0 4px 14px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 18px 38px rgba(15, 23, 42, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    color: var(--dark);
+    background: #FAFCFD;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  .app { min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+  /* Decorative gradient blobs (landing only) */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+    transition: opacity 0.6s;
+  }
+  .blob-1 { width: 500px; height: 500px; background: var(--teal-soft); top: -150px; right: -100px; }
+  .blob-2 { width: 400px; height: 400px; background: var(--coral-soft); bottom: -100px; left: -100px; opacity: 0.4; }
+  body.scrolled .blob { opacity: 0.2; }
+
+  .container { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; width: 100%; position: relative; z-index: 1; }
+
+  /* Top bar (in-quiz) */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--gray-border);
+    background: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-brand { font-weight: 700; color: var(--teal); font-size: 14px; letter-spacing: 0.04em; }
+  .topbar-progress {
+    flex: 1;
+    margin: 0 24px;
+    max-width: 420px;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--gray-border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--coral));
+    border-radius: 100px;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .progress-label { display: block; font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
+  .exit-btn {
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    color: var(--muted);
+    font-size: 18px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .exit-btn:hover { background: var(--gray-bg); color: var(--dark); }
+
+  /* Landing */
+  .hero {
+    text-align: center;
+    padding: 64px 0 48px;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    color: var(--teal);
+    background: var(--teal-soft);
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+  }
+  .hero-title {
+    font-size: clamp(40px, 6vw, 64px);
+    font-weight: 800;
+    color: var(--dark);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    margin-bottom: 14px;
+  }
+  .hero-title .accent { color: var(--teal); }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 540px;
+    margin: 0 auto;
+  }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 48px;
+  }
+  @media (max-width: 640px) {
+    .mode-grid { grid-template-columns: 1fr; }
+    .hero { padding: 40px 0 24px; }
+  }
+  .mode-card {
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+  .mode-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--teal);
+  }
+  .mode-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 60%, var(--teal-tint) 100%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+  .mode-card:hover::after { opacity: 1; }
+  .mode-icon {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+    background: var(--teal-soft);
+  }
+  .mode-card.test .mode-icon { background: var(--coral-soft); }
+  .mode-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .mode-desc { color: var(--muted); font-size: 15px; line-height: 1.55; }
+  .mode-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    color: var(--teal);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .mode-card.test .mode-cta { color: var(--coral); }
+
+  .signature {
+    text-align: center;
+    padding: 40px 0 12px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .signature strong { color: var(--dark); font-weight: 600; }
+
+  /* Setup screen */
+  .setup {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+  .setup-back {
+    color: var(--muted);
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 28px;
+    transition: color 0.15s;
+  }
+  .setup-back:hover { color: var(--teal); }
+  .setup-badge {
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+  }
+  .setup.drill .setup-badge { color: var(--teal); background: var(--teal-soft); }
+  .setup.test .setup-badge { color: var(--coral); background: var(--coral-soft); }
+  .setup h1 {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .setup p { color: var(--muted); font-size: 17px; margin-bottom: 32px; }
+
+  .target-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  @media (max-width: 540px) {
+    .target-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .target-card {
+    padding: 24px 16px;
+    background: var(--white);
+    border: 2px solid var(--gray-border);
+    border-radius: var(--radius);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .target-card:hover { border-color: var(--teal); transform: translateY(-2px); }
+  .target-card.selected {
+    border-color: var(--teal);
+    background: var(--teal-soft);
+  }
+  .setup.test .target-card.selected {
+    border-color: var(--coral);
+    background: var(--coral-soft);
+  }
+  .target-num { font-size: 32px; font-weight: 800; color: var(--dark); }
+  .target-label { font-size: 12px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+
+  .start-btn {
+    width: 100%;
+    padding: 18px 28px;
+    background: var(--teal);
+    color: var(--white);
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .start-btn:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .setup.test .start-btn { background: var(--coral); }
+  .setup.test .start-btn:hover { background: #E04E54; }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* Quiz screen */
+  .quiz {
+    padding: 32px 24px 48px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .question-prompt {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 32px 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    border-left: 4px solid var(--teal);
+  }
+  .question-meta {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .question-text {
+    font-size: clamp(22px, 3.4vw, 28px);
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.35;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--white);
+    border: 2px solid var(--gray-border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    text-align: left;
+    transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    font-family: inherit;
+    font-size: 17px;
+    color: var(--dark);
+    width: 100%;
+  }
+  .option:not(:disabled):hover {
+    border-color: var(--teal);
+    background: var(--teal-tint);
+    transform: translateX(2px);
+  }
+  .option-badge {
+    flex-shrink: 0;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--teal-soft);
+    color: var(--teal);
+    font-weight: 700;
+    font-size: 17px;
+    display: grid; place-items: center;
+    transition: all 0.18s;
+  }
+  .option-text { flex: 1; }
+  .option-shortcut {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--gray-bg);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+  @media (max-width: 540px) { .option-shortcut { display: none; } }
+
+  /* Option states after answer (drill mode) */
+  .option.correct {
+    border-color: var(--green);
+    background: var(--green-soft);
+    color: var(--dark);
+  }
+  .option.correct .option-badge {
+    background: var(--green);
+    color: var(--white);
+  }
+  .option.wrong-pick {
+    border-color: var(--red);
+    background: var(--red-soft);
+  }
+  .option.wrong-pick .option-badge {
+    background: var(--red);
+    color: var(--white);
+  }
+  .option.dimmed { opacity: 0.45; }
+  .option:disabled { cursor: default; }
+
+  /* Selected (test mode, before next) */
+  .option.selected {
+    border-color: var(--teal);
+    background: var(--teal-soft);
+  }
+  .option.selected .option-badge {
+    background: var(--teal);
+    color: var(--white);
+  }
+
+  /* Feedback panel (drill mode) */
+  .feedback {
+    margin-top: 24px;
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    animation: slideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .feedback.correct {
+    background: var(--green-soft);
+    border-left: 4px solid var(--green);
+  }
+  .feedback.wrong {
+    background: var(--coral-soft);
+    border-left: 4px solid var(--coral);
+  }
+  .feedback-title {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feedback.correct .feedback-title { color: var(--green); }
+  .feedback.wrong .feedback-title { color: var(--coral); }
+  .feedback-body { color: var(--dark); font-size: 15px; line-height: 1.55; }
+  .feedback-correct-answer { font-weight: 600; margin-top: 8px; }
+  .feedback-correct-answer em { color: var(--green); font-style: normal; font-weight: 700; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Next button */
+  .next-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .next-row .hint {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .next-btn {
+    padding: 14px 28px;
+    background: var(--teal);
+    color: var(--white);
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .next-btn:hover { background: var(--teal-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .next-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* Keyboard hints */
+  .kbd-hints {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .kbd-hints kbd {
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0 2px;
+  }
+  @media (max-width: 540px) { .kbd-hints { display: none; } }
+
+  /* Done / Results screens */
+  .results { max-width: 720px; margin: 0 auto; padding: 48px 24px; text-align: center; }
+  .results-emoji { font-size: 64px; margin-bottom: 16px; }
+  .results-title {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .results-sub { color: var(--muted); font-size: 18px; margin-bottom: 36px; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 0 auto 40px;
+    max-width: 540px;
+  }
+  @media (max-width: 540px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .stats-row .stat:last-child { grid-column: 1 / -1; }
+  }
+  .stat {
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius);
+    padding: 22px 16px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--dark);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-value.coral { color: var(--coral); }
+  .stat-value.teal { color: var(--teal); }
+  .stat-value.green { color: var(--green); }
+  .stat-label {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .results-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn-primary {
+    padding: 14px 26px;
+    background: var(--teal);
+    color: var(--white);
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: var(--teal-dark); transform: translateY(-1px); }
+  .btn-secondary {
+    padding: 14px 26px;
+    background: var(--white);
+    color: var(--dark);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--teal); color: var(--teal); }
+
+  /* Review (test results) */
+  .review {
+    text-align: left;
+    margin-top: 16px;
+  }
+  .review-header {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 40px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-border);
+  }
+  .review-item {
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    border-left: 4px solid var(--coral);
+  }
+  .review-prompt {
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--dark);
+    margin-bottom: 14px;
+  }
+  .review-line { font-size: 15px; margin-bottom: 6px; display: flex; gap: 10px; align-items: flex-start; }
+  .review-line .lbl {
+    flex-shrink: 0;
+    font-weight: 700;
+    width: 88px;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-top: 2px;
+  }
+  .review-line.you .val { color: var(--red); }
+  .review-line.correct .val { color: var(--green); font-weight: 600; }
+  .review-explanation {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--gray-border);
+    font-size: 14px;
+    color: var(--dark);
+    line-height: 1.55;
+  }
+
+  /* Screen transitions */
+  .screen { animation: fadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Hide */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div id="app" class="app">
+  <!-- Screens render here -->
+</div>
+
+<script>
+const QUESTIONS = [{"prompt": "Are you going to have a party tomorrow?", "options": ["No, I'm too busy.", "Yes, it was great.", "I've had one."], "correctIndex": 0, "explanation": "Savol kelasi zamonda berilgan (Are you going to…). Javob ham kelajakdagi rejaga mos kelishi kerak: shu uchun 'No, I'm too busy' to'g'ri.", "_id": 1}, {"prompt": "I'm going to the cinema tonight. Would you like to come?", "options": ["I'd love to, but I have to study.", "I like watching movies very much.", "I went there last week with my brother."], "correctIndex": 0, "explanation": "Bu — taklif. 'I'd love to, but…' iborasi taklifni xushmuomalalik bilan rad etish uchun ishlatiladi.", "_id": 2}, {"prompt": "Where did you put my keys?", "options": ["They are on the kitchen table.", "I'm looking for them now.", "I'll put them in my bag later."], "correctIndex": 0, "explanation": "'Where did you put' — joy haqida savol. Javob kalitlar qayerdaligini ko'rsatishi kerak.", "_id": 3}, {"prompt": "Shall we go for a walk in the park?", "options": ["It's a very big park.", "That's a great idea!", "I walk to school every day."], "correctIndex": 1, "explanation": "'Shall we…' — taklif. 'That's a great idea!' — taklifni qabul qilishning eng tabiiy yo'li.", "_id": 4}, {"prompt": "How much was your new phone?", "options": ["It's very expensive.", "I bought it on Saturday.", "It cost three hundred pounds."], "correctIndex": 2, "explanation": "'How much' — aniq narx haqida savol. Faqat aniq summa ('three hundred pounds') to'g'ri javob.", "_id": 5}, {"prompt": "I've got a terrible cold.", "options": ["You should stay in bed.", "I had one last month.", "Why are you cold?"], "correctIndex": 0, "explanation": "Birov kasalligi haqida aytsa, javob — maslahat yoki hamdardlik bo'lishi kerak.", "_id": 6}, {"prompt": "Can I borrow your pen for a second?", "options": ["I'm using it at the moment.", "I have two pens in my bag.", "Yes, I lent it to Sarah."], "correctIndex": 0, "explanation": "Bu — xushmuomalalik bilan rad etish: 'men hozir foydalanyapman' degan ma'noda 'yo'q, bera olmayman'.", "_id": 7}, {"prompt": "Did you enjoy the concert last night?", "options": ["It starts at eight o'clock.", "Yes, the music was amazing!", "I'm going to go tomorrow."], "correctIndex": 1, "explanation": "'Did you enjoy' — o'tgan zamondagi savol. Javob ham o'tgan zamonda va his-tuyg'uni bildirishi kerak.", "_id": 8}, {"prompt": "How often do you go to the gym?", "options": ["I went there yesterday morning.", "Three times a week.", "It's near the supermarket."], "correctIndex": 1, "explanation": "'How often' — takroriylik haqida savol. Javob qanchalik tez-tez ekanligini ko'rsatishi kerak.", "_id": 9}, {"prompt": "Whose bag is this?", "options": ["It belongs to my sister.", "She is carrying a blue bag.", "I think it's a nice bag."], "correctIndex": 0, "explanation": "'Whose' — kimning? Javob egasini ko'rsatishi kerak.", "_id": 10}, {"prompt": "Could you pass me the salt, please?", "options": ["Yes, here you are.", "I like salt on my chips.", "The salt is in the kitchen."], "correctIndex": 0, "explanation": "'Could you…' — xushmuomala iltimos. 'Yes, here you are' — iltimosni bajarish.", "_id": 11}, {"prompt": "Would you like some more cake?", "options": ["Yes, please. It's delicious.", "I ate some cake earlier.", "I don't like chocolate."], "correctIndex": 0, "explanation": "'Would you like' — taklif. 'Yes, please' — qabul qilishning standart yo'li.", "_id": 12}, {"prompt": "What time does the film start?", "options": ["It's two hours long.", "At half past seven.", "It started a week ago."], "correctIndex": 1, "explanation": "'What time' — aniq vaqt haqida savol. Faqat aniq vaqt javobi to'g'ri.", "_id": 13}, {"prompt": "I'm sorry, I've broken your glass.", "options": ["It was a glass of water.", "Don't worry about it.", "I'm breaking it now."], "correctIndex": 1, "explanation": "Birov uzr so'raganda, 'Don't worry about it' — kechirim va tinchlantirish.", "_id": 14}, {"prompt": "How was your holiday in Spain?", "options": ["We're going next year.", "We had a brilliant time!", "I go to Spain every summer."], "correctIndex": 1, "explanation": "'How was' — o'tgan tajriba haqida savol. Javob ham o'tgan zamonda baholash bo'lishi kerak.", "_id": 15}, {"prompt": "Can you swim?", "options": ["Yes, I can.", "No, I'm swimming.", "I'd like to swim."], "correctIndex": 0, "explanation": "'Can you…' — qodirlik haqida ha/yo'q savoli. Javob — tasdiqlash yoki rad etish.", "_id": 16}, {"prompt": "It's very hot in here.", "options": ["I'll open the window.", "I'm hot too.", "It was cold yesterday."], "correctIndex": 0, "explanation": "Birov noqulaylik bildirganda, yechim taklif qilish ('I'll open the window') eng tabiiy javob.", "_id": 17}, {"prompt": "What does your brother do?", "options": ["He's watching TV.", "He's a doctor.", "He does it well."], "correctIndex": 1, "explanation": "'What does he do?' — kasb haqida savol. Javob aniq kasbni ko'rsatishi kerak.", "_id": 18}, {"prompt": "Have you finished your homework?", "options": ["I'm doing it now.", "Not yet.", "I finished it yesterday."], "correctIndex": 1, "explanation": "'Have you finished' — present perfect savol. 'Not yet' — hozircha tugatmadim degani, eng to'g'ri javob.", "_id": 19}, {"prompt": "Where's the nearest post office?", "options": ["It's just round the corner.", "I'm going to the post office.", "The post office is closed."], "correctIndex": 0, "explanation": "'Where' — joy savoli. Yo'l ko'rsatish ('round the corner') eng to'g'ri javob.", "_id": 20}, {"prompt": "Would you prefer tea or coffee?", "options": ["I'd rather have tea, please.", "I like them both.", "Coffee is stronger than tea."], "correctIndex": 0, "explanation": "Tanlov savoli — javob ikkitadan birini tanlashi kerak. 'I'd rather have tea' — aniq tanlov.", "_id": 21}, {"prompt": "Is it going to rain today?", "options": ["I hope not.", "It rained yesterday.", "It's raining now."], "correctIndex": 0, "explanation": "Kelasi haqida savol. 'I hope not' — umid bildirish, savolga mos.", "_id": 22}, {"prompt": "How do you get to work?", "options": ["I take the bus.", "I'm working now.", "It takes twenty minutes."], "correctIndex": 0, "explanation": "'How do you get' — transport haqida savol. 'I take the bus' — aniq vositani ko'rsatish.", "_id": 23}, {"prompt": "Nice to meet you.", "options": ["Nice to meet you too.", "I'm fine, thank you.", "How are you?"], "correctIndex": 0, "explanation": "Tanishish paytidagi standart javob — bir xil iborani qaytarish.", "_id": 24}, {"prompt": "I've lost my mobile phone.", "options": ["Where did you last have it?", "I've got a new phone.", "My phone is black."], "correctIndex": 0, "explanation": "Birov muammo haqida aytsa, yordam berishga qaratilgan savol berish — 'Where did you last have it?' eng to'g'ri javob.", "_id": 25}, {"prompt": "Do you mind if I sit here?", "options": ["No, not at all.", "Yes, I'm sitting here.", "I sit here every day."], "correctIndex": 0, "explanation": "'Do you mind' — ruxsat so'rash. 'No, not at all' = 'qarshilik yo'q' = 'ha, o'tirishingiz mumkin'.", "_id": 26}, {"prompt": "How long have you lived here?", "options": ["For five years.", "I live in London.", "Since I was a child."], "correctIndex": 0, "explanation": "'How long' — vaqt davomiyligi savoli. 'For + duration' eng aniq javob beradi.", "_id": 27}, {"prompt": "What's the weather like?", "options": ["It's sunny and warm.", "I like the weather.", "It's going to be cold."], "correctIndex": 0, "explanation": "'What's it like' — hozirgi holatni tavsiflash. Javob hozirgi ob-havoni aytishi kerak.", "_id": 28}, {"prompt": "Can I help you?", "options": ["No, thanks. I'm just looking.", "Yes, you can.", "I'm helping my mother."], "correctIndex": 0, "explanation": "Do'kondagi standart javob — sotuvchining yordamini xushmuomalalik bilan rad etish.", "_id": 29}, {"prompt": "I'm going to bed now. Goodnight!", "options": ["Sleep well!", "I'm tired too.", "See you in the morning."], "correctIndex": 0, "explanation": "'Goodnight' aytilganda, 'Sleep well!' — yaxshi tilak bildirishning standart javobi.", "_id": 30}, {"prompt": "What are you doing this weekend?", "options": ["I'm visiting my grandparents.", "I went to the cinema.", "I'm doing my homework."], "correctIndex": 0, "explanation": "'This weekend' — kelajak reja haqida. Javob present continuous bilan kelajak rejasini bildiradi.", "_id": 31}, {"prompt": "Is this your coat?", "options": ["No, it's mine.", "Yes, it's my coat.", "No, it belongs to Peter."], "correctIndex": 1, "explanation": "'Is this…' — ha/yo'q savoli. 'Yes, it's my coat' — to'g'ridan-to'g'ri tasdiqlash.", "_id": 32}, {"prompt": "How's your sister?", "options": ["She's very well, thanks.", "She's my sister.", "She's ten years old."], "correctIndex": 0, "explanation": "'How is she?' — birovning ahvolini so'rash. Javob holatini bildirishi kerak.", "_id": 33}, {"prompt": "Would you like to go to the party?", "options": ["Yes, I'd love to.", "I'm going to a party.", "I like parties."], "correctIndex": 0, "explanation": "'Would you like' — taklif. 'Yes, I'd love to' — taklifni qabul qilishning eng tabiiy yo'li.", "_id": 34}, {"prompt": "What did you buy at the shops?", "options": ["A new pair of jeans.", "I'm going shopping.", "The shops are closed."], "correctIndex": 0, "explanation": "'What did you buy' — o'tgan zamonda nima sotib oldingiz. Javob aniq narsani ko'rsatishi kerak.", "_id": 35}, {"prompt": "Can you speak English?", "options": ["Yes, a little.", "No, I'm speaking English.", "I'd like to learn English."], "correctIndex": 0, "explanation": "'Can you' — qodirlik savoli. 'Yes, a little' — qisman qodirlikni tasdiqlash.", "_id": 36}, {"prompt": "Excuse me, is there a bank near here?", "options": ["Yes, there's one on High Street.", "The bank is open.", "I'm going to the bank."], "correctIndex": 0, "explanation": "Joy haqida savol. Javob aniq joyni ko'rsatishi kerak.", "_id": 37}, {"prompt": "I'm bored.", "options": ["Why don't we watch a film?", "I'm bored too.", "It was a boring film."], "correctIndex": 0, "explanation": "Birov zerikkanini aytsa, 'Why don't we…' — yechim/faoliyat taklif qilish.", "_id": 38}, {"prompt": "What's your favorite food?", "options": ["I love pizza.", "I'm eating pizza now.", "Pizza is very popular."], "correctIndex": 0, "explanation": "Sevimli narsa haqida savol. Javob aniq narsa nomi va sevish hissi bo'lishi kerak.", "_id": 39}, {"prompt": "How was the exam?", "options": ["It was quite difficult.", "I'm taking the exam tomorrow.", "I've passed the exam."], "correctIndex": 0, "explanation": "'How was' — o'tgan zamonda baholash. Javob ham o'tgan zamonda bo'lishi kerak.", "_id": 40}, {"prompt": "Are you coming to the football match?", "options": ["I'm afraid I can't.", "I like football.", "The match starts at three."], "correctIndex": 0, "explanation": "Taklifni xushmuomalalik bilan rad etish: 'I'm afraid I can't' — kechirim bilan.", "_id": 41}, {"prompt": "What color is your new car?", "options": ["It's bright red.", "My car is very fast.", "I bought it yesterday."], "correctIndex": 0, "explanation": "Rang haqida savol — javob rangni ko'rsatishi kerak.", "_id": 42}, {"prompt": "Can you tell me the way to the station?", "options": ["Go straight on and turn left.", "I'm going to the station.", "The station is very big."], "correctIndex": 0, "explanation": "Yo'l so'raganda, yo'nalishni ko'rsatish — eng to'g'ri javob.", "_id": 43}, {"prompt": "I've got a new job!", "options": ["Congratulations!", "I'm looking for a job.", "What do you do?"], "correctIndex": 0, "explanation": "Yangi yutuq haqida xabar. Javob — tabriklash.", "_id": 44}, {"prompt": "Do you like playing tennis?", "options": ["Yes, I do. It's fun.", "I played tennis yesterday.", "I'm playing tennis now."], "correctIndex": 0, "explanation": "'Do you like' — ha/yo'q savoli. Javob tasdiqlash va sabab.", "_id": 45}, {"prompt": "What's the matter with your leg?", "options": ["I fell off my bike yesterday.", "It's my right leg.", "I'm going to see the doctor."], "correctIndex": 0, "explanation": "'What's the matter' — nima bo'ldi? Javob sababini tushuntirishi kerak.", "_id": 46}, {"prompt": "Can you help me with this suitcase?", "options": ["It's very heavy, isn't it?", "Of course, I'll carry it for you.", "I helped you yesterday."], "correctIndex": 1, "explanation": "Iltimosga javob — rozilik va aniq yordam taklifi: 'Of course, I'll carry it for you'.", "_id": 47}, {"prompt": "Have you ever been to New York?", "options": ["Yes, I went there last summer.", "No, I'm going to go next year.", "I would like to go there."], "correctIndex": 0, "explanation": "'Have you ever been' — tajriba haqida savol. Javob tasdiqlash va o'tgan vaqtni bildirishi kerak.", "_id": 48}, {"prompt": "Is your brother older than you?", "options": ["No, he's two years younger.", "Yes, I am older than him.", "He is my only brother."], "correctIndex": 0, "explanation": "Yosh taqqoslash savoli. Javob aniq taqqoslash bilan rad etish.", "_id": 49}, {"prompt": "See you at the station at six!", "options": ["Don't be late!", "I'm going by train.", "Six o'clock is early."], "correctIndex": 0, "explanation": "Uchrashuv vaqti tasdiqlanganda, 'Don't be late!' — eslatma javob.", "_id": 50}, {"prompt": "What did you do last weekend?", "options": ["I went camping with my family.", "I'm going to the beach.", "I do it every weekend."], "correctIndex": 0, "explanation": "'What did you do' — o'tgan zamondagi savol. Javob ham o'tgan zamonda bo'lishi kerak.", "_id": 51}, {"prompt": "Don't forget to call me later.", "options": ["I won't, don't worry.", "I called you yesterday.", "I forgot my phone."], "correctIndex": 0, "explanation": "Eslatma berilganda, 'I won't' — unutmasligini va'da qilish.", "_id": 52}, {"prompt": "Are these your gloves?", "options": ["Yes, they're mine.", "Yes, I have gloves.", "They are warm."], "correctIndex": 0, "explanation": "Egalik haqida ha/yo'q savol. 'Yes, they're mine' — to'g'ridan-to'g'ri tasdiqlash.", "_id": 53}, {"prompt": "Could I have the bill, please?", "options": ["Of course, I'll bring it right away.", "The food was lovely.", "Yes, I paid for it."], "correctIndex": 0, "explanation": "Restorandagi iltimos. Javob — rozilik va harakatga o'tish.", "_id": 54}, {"prompt": "Why are you so happy today?", "options": ["I passed my driving test!", "I'm always happy.", "Today is Monday."], "correctIndex": 0, "explanation": "'Why' — sabab savoli. Javob aniq sababni ko'rsatishi kerak.", "_id": 55}, {"prompt": "How many sisters do you have?", "options": ["I have two.", "My sister is older.", "They are very kind."], "correctIndex": 0, "explanation": "'How many' — son haqida savol. Javob aniq raqam bo'lishi kerak.", "_id": 56}, {"prompt": "What's that noise?", "options": ["I think it's the neighbours.", "I'm listening to music.", "It was very loud."], "correctIndex": 0, "explanation": "Tovush manbasi haqida savol. Javob taxminiy sababni bildiradi.", "_id": 57}, {"prompt": "Excuse me, do you have this shirt in blue?", "options": ["Let me check for you.", "The shirt is nice.", "I bought a blue shirt."], "correctIndex": 0, "explanation": "Do'konda mijozning savoliga sotuvchining standart javobi — tekshirishni taklif qilish.", "_id": 58}, {"prompt": "I'm going to miss the bus!", "options": ["Hurry up then!", "The bus is late.", "I take the bus too."], "correctIndex": 0, "explanation": "Shoshilinch holatga reaksiya — harakatga undash.", "_id": 59}, {"prompt": "Shall I open the window?", "options": ["Yes, please. It's so hot.", "The window is broken.", "I closed it earlier."], "correctIndex": 0, "explanation": "'Shall I…' — taklif. Javob — qabul qilish va sabab.", "_id": 60}, {"prompt": "Is anyone sitting here?", "options": ["No, the seat is free.", "Yes, I'm sitting.", "I sat there yesterday."], "correctIndex": 0, "explanation": "Joy bo'shligi haqida savol — javob aniq holatni bildiradi.", "_id": 61}, {"prompt": "What time should we meet tomorrow?", "options": ["How about seven o'clock?", "We met yesterday at six.", "I'll be on time."], "correctIndex": 0, "explanation": "Vaqt haqida muhokama — javob aniq vaqt taklif qilishi kerak.", "_id": 62}, {"prompt": "Whose turn is it to wash the dishes?", "options": ["I think it's yours.", "I washed them already.", "The dishes are clean."], "correctIndex": 0, "explanation": "'Whose turn' — kimning navbati? Javob aniq shaxsni ko'rsatishi kerak.", "_id": 63}, {"prompt": "Do you want me to wait for you?", "options": ["No, you can go ahead.", "I'm waiting for the bus.", "I waited a long time."], "correctIndex": 0, "explanation": "Taklifni xushmuomalalik bilan rad etish.", "_id": 64}, {"prompt": "I'm thinking of buying a new laptop.", "options": ["Which one do you like?", "My laptop is old.", "I bought one last year."], "correctIndex": 0, "explanation": "Birov rejasi haqida gapirsa, qiziqish bilan savol berish — tabiiy javob.", "_id": 65}, {"prompt": "What will you do if it rains?", "options": ["We'll go to the museum instead.", "It rained yesterday.", "I love the rain."], "correctIndex": 0, "explanation": "Birinchi shartli gap (if + present, will + verb). Javob 'will' bilan kelajak rejasini bildirishi kerak.", "_id": 66}, {"prompt": "Have you finished the report yet?", "options": ["Almost — just one more page.", "I'm writing a report.", "I finished school."], "correctIndex": 0, "explanation": "'Yet' — hali tugatdingmi? Javob progressni ko'rsatadi.", "_id": 67}, {"prompt": "Should I take an umbrella?", "options": ["Yes, it looks like rain.", "I have a black umbrella.", "I forgot mine yesterday."], "correctIndex": 0, "explanation": "'Should I' — maslahat so'rash. Javob — ha/yo'q va sabab.", "_id": 68}, {"prompt": "Which is cheaper — the train or the bus?", "options": ["The bus, usually.", "I prefer the train.", "They both go to London."], "correctIndex": 0, "explanation": "Taqqoslash savoli — javob ikkisidan birini tanlashi kerak.", "_id": 69}, {"prompt": "What do you think of the new manager?", "options": ["She seems really capable.", "I'm the manager.", "He works in our office."], "correctIndex": 0, "explanation": "Fikr so'raganda — baho berish javob bo'ladi.", "_id": 70}, {"prompt": "I'm really sorry I'm late.", "options": ["That's all right — come in.", "I'm late too.", "The bus was late."], "correctIndex": 0, "explanation": "Uzr so'raganda — kechirish va davom etish.", "_id": 71}, {"prompt": "Could we move the meeting to Friday?", "options": ["Sure, Friday works for me.", "The meeting was useful.", "I work on Fridays."], "correctIndex": 0, "explanation": "Iltimosga rozilik va tasdiqlash javobi.", "_id": 72}, {"prompt": "What were you doing when I called?", "options": ["I was making dinner.", "I'll call you back.", "I usually cook at seven."], "correctIndex": 0, "explanation": "Past continuous savol — javob ham past continuous bo'lishi kerak.", "_id": 73}, {"prompt": "Did you use to live in the city?", "options": ["Yes, for about ten years.", "I'm living there now.", "The city is very big."], "correctIndex": 0, "explanation": "'Used to' — o'tmishdagi odat. Javob ha/yo'q va davomi.", "_id": 74}, {"prompt": "She said she wasn't feeling well.", "options": ["Oh, I hope she's better soon.", "I'm not feeling well either.", "She said it to me."], "correctIndex": 0, "explanation": "Birov kasalligi haqida xabar olganda — hamdardlik bilan tilak bildirish.", "_id": 75}, {"prompt": "Could you turn down the music, please?", "options": ["Sorry, I didn't realise it was so loud.", "I like this song.", "The music is loud."], "correctIndex": 0, "explanation": "Iltimosga uzr va rozilik javobi.", "_id": 76}, {"prompt": "How often do you check your emails?", "options": ["Probably every couple of hours.", "I sent you an email.", "My inbox is full."], "correctIndex": 0, "explanation": "Takroriylik savoli — javob vaqt oralig'ini ko'rsatishi kerak.", "_id": 77}, {"prompt": "When will you arrive at the airport?", "options": ["Around three o'clock, I think.", "I'm at the airport now.", "I flew yesterday."], "correctIndex": 0, "explanation": "Kelasi vaqt savoli — javob taxminiy vaqtni bildirishi kerak.", "_id": 78}, {"prompt": "I think it's going to snow tonight.", "options": ["Really? I hope not.", "Snow is white.", "It snowed last winter."], "correctIndex": 0, "explanation": "Taxminga reaksiya — ajablanish va orzu bildirish.", "_id": 79}, {"prompt": "You haven't seen my keys, have you?", "options": ["No, but I'll help you look.", "I have my keys.", "The keys are heavy."], "correctIndex": 0, "explanation": "Tasdiqlovchi savol — javob inkor va yordam taklifi.", "_id": 80}, {"prompt": "What would you do if you won the lottery?", "options": ["I'd travel around the world.", "I won't buy a ticket.", "I bought one yesterday."], "correctIndex": 0, "explanation": "Ikkinchi shartli gap — javob 'would + verb' bilan bo'lishi kerak.", "_id": 81}, {"prompt": "You look tired. Have you been working all night?", "options": ["Yes, I haven't slept at all.", "I work in an office.", "I worked yesterday."], "correctIndex": 0, "explanation": "Present perfect continuous savol — javob tasdiqlash va davomi.", "_id": 82}, {"prompt": "Do you know where the nearest pharmacy is?", "options": ["There's one just down this street.", "I'm going to the pharmacy.", "I need medicine."], "correctIndex": 0, "explanation": "Bilvosita savol — joy haqida. Javob aniq yo'l ko'rsatishi kerak.", "_id": 83}, {"prompt": "When was this building built?", "options": ["Sometime in the 1920s, I believe.", "They are building a new one.", "The building is tall."], "correctIndex": 0, "explanation": "Passive past savol — javob o'tgan vaqtni ko'rsatishi kerak.", "_id": 84}, {"prompt": "Whose phone is ringing?", "options": ["It must be mine — sorry!", "The phone is loud.", "I called you earlier."], "correctIndex": 0, "explanation": "'Must' — taxmin (deduksiya). Javob taxminni bildiradi.", "_id": 85}, {"prompt": "By the time we arrived, the film had already started.", "options": ["Oh no, did you miss much?", "I love that film.", "The film starts at seven."], "correctIndex": 0, "explanation": "Past perfect xabar — javob hamdardlik va batafsil savol.", "_id": 86}, {"prompt": "The book that I borrowed from you was excellent.", "options": ["I'm so glad you enjoyed it.", "I read a lot of books.", "My books are at home."], "correctIndex": 0, "explanation": "Maqtov olganda — mamnunlik bildirish.", "_id": 87}, {"prompt": "I'm thinking of giving up coffee.", "options": ["Good luck — I tried that once.", "I drink coffee every day.", "Coffee is a drink."], "correctIndex": 0, "explanation": "Birov reja haqida gapirsa — yordam bildirish va shaxsiy tajribani baham ko'rish.", "_id": 88}, {"prompt": "I wish I had studied harder for the exam.", "options": ["Don't be too hard on yourself.", "The exam was easy.", "I'll study tomorrow."], "correctIndex": 0, "explanation": "'I wish + had' — afsus. Javob — tasalli berish.", "_id": 89}, {"prompt": "Although it was raining, we still went for a walk.", "options": ["That sounds nice — was it cold?", "I love the rain.", "Walking is good exercise."], "correctIndex": 0, "explanation": "Xabarga qiziqish va batafsil savol berish.", "_id": 90}, {"prompt": "I'm afraid I have to take a rain check on tonight.", "options": ["No problem — maybe next week?", "The rain stopped already.", "I'll check the weather."], "correctIndex": 0, "explanation": "'Rain check' — idioma, 'keyinroq bo'lsin' degani. Javob — tushunish va muqobil taklif.", "_id": 91}, {"prompt": "Would you mind awfully if I borrowed your car this evening?", "options": ["Not at all — here are the keys.", "The car is broken.", "I drive every day."], "correctIndex": 0, "explanation": "Juda xushmuomala iltimos. 'Not at all' = 'qarshilik yo'q' = ha, mumkin.", "_id": 92}, {"prompt": "I'm not sure I can make it on Saturday.", "options": ["That's a shame — maybe another time?", "Saturday is my favourite day.", "I made it yesterday."], "correctIndex": 0, "explanation": "Yashirin rad etish. Javob — afsuslanish va boshqa taklif.", "_id": 93}, {"prompt": "I'm having my hair cut tomorrow.", "options": ["Oh, which salon do you go to?", "Your hair is nice.", "I cut my own hair."], "correctIndex": 0, "explanation": "Causative shakl ('have something done'). Javob — qiziqish savoli.", "_id": 94}, {"prompt": "If I'd known you were coming, I would have cooked something special.", "options": ["Don't worry, this is lovely as it is.", "I came by bus.", "I'll bring food next time."], "correctIndex": 0, "explanation": "Uchinchi shartli gap. Javob — tinchlantirish.", "_id": 95}, {"prompt": "He's got a real chip on his shoulder about that promotion.", "options": ["Yes, he can't seem to let it go.", "He likes chips.", "His shoulder hurts."], "correctIndex": 0, "explanation": "'Chip on his shoulder' — idioma: g'azab/ranj. Javob mavzuga mos rozilik.", "_id": 96}, {"prompt": "Oh great, another meeting at five o'clock on a Friday.", "options": ["I know — like we don't have anything better to do.", "Meetings are important.", "Friday is the end of the week."], "correctIndex": 0, "explanation": "Bu — sarkazm (irony). 'Oh great' aslida 'yomon' degani. Javob ham sarkastik kayfiyatda.", "_id": 97}, {"prompt": "If I were you, I'd have spoken to her sooner.", "options": ["You're probably right — I should have.", "I am you.", "She'll be here soon."], "correctIndex": 0, "explanation": "Aralash shartli maslahat. Javob — rozilik va afsus.", "_id": 98}, {"prompt": "Well, that's one way of looking at it.", "options": ["You don't sound entirely convinced.", "Yes, I'm looking now.", "There are two ways."], "correctIndex": 0, "explanation": "Bu — yashirin rozilik bermaslik. Javob bu nozik ma'noni payqaydi.", "_id": 99}, {"prompt": "I don't suppose you could lend me twenty pounds until Friday?", "options": ["I could, but you still owe me from last time.", "Twenty is a number.", "Friday is in three days."], "correctIndex": 0, "explanation": "Juda tortinchoq iltimos. Javob — shartli rozilik va eslatma.", "_id": 100}];
+
+// ============================================================
+// State
+// ============================================================
+const state = {
+  screen: 'landing',
+  mode: null,        // 'drill' | 'test'
+  target: null,      // 10 | 20 | 50 | 100
+  // drill state
+  drillQueue: [],    // questions yet to master (FIFO with re-push on wrong)
+  drillTotal: 0,
+  drillMastered: 0,
+  drillAttempts: 0,
+  drillStartTime: null,
+  // test state
+  testQueue: [],
+  testIndex: 0,
+  testAnswers: [],   // { q, selected, correctIndex }
+  // current question UI state
+  current: null,
+  selectedIndex: null,
+  isAnswered: false,
+  wasCorrect: null,
+};
+
+// ============================================================
+// Helpers
+// ============================================================
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Take a question and produce a "presented" copy with options shuffled
+// and correctIndex updated to point at the shuffled position.
+function presentQuestion(q) {
+  const idxs = shuffle([0, 1, 2]);
+  const shuffledOptions = idxs.map(i => q.options[i]);
+  const newCorrect = idxs.indexOf(q.correctIndex);
+  return {
+    sourceId: q._id,
+    prompt: q.prompt,
+    options: shuffledOptions,
+    correctIndex: newCorrect,
+    correctText: q.options[q.correctIndex],
+    explanation: q.explanation,
+  };
+}
+
+function sample(arr, n) { return shuffle(arr).slice(0, n); }
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// ============================================================
+// Renderers
+// ============================================================
+const app = document.getElementById('app');
+
+function render() {
+  switch (state.screen) {
+    case 'landing':       renderLanding(); break;
+    case 'drill-setup':   renderSetup('drill'); break;
+    case 'test-setup':    renderSetup('test'); break;
+    case 'drill':         renderQuiz('drill'); break;
+    case 'test':          renderQuiz('test'); break;
+    case 'drill-done':    renderDrillDone(); break;
+    case 'test-results':  renderTestResults(); break;
+  }
+}
+
+function renderLanding() {
+  app.innerHTML = `
+    <div class="screen container">
+      <div class="hero">
+        <span class="hero-eyebrow">LISTENING PART 1 · PRACTICE BANK</span>
+        <h1 class="hero-title">Train your <span class="accent">listening agility</span></h1>
+        <p class="hero-sub">100 practice questions. Two modes. Repeat until the right answer is automatic.</p>
+      </div>
+      <div class="mode-grid">
+        <button class="mode-card drill" onclick="goto('drill-setup')">
+          <div class="mode-icon">⚡</div>
+          <div class="mode-title">Drill Mode</div>
+          <div class="mode-desc">Quick, random questions. See the answer right away. Wrong ones come back until you nail them.</div>
+          <span class="mode-cta">Build agility →</span>
+        </button>
+        <button class="mode-card test" onclick="goto('test-setup')">
+          <div class="mode-icon">📋</div>
+          <div class="mode-title">Test Mode</div>
+          <div class="mode-desc">Pick your length. Answer everything without hints. See your score and review what you missed.</div>
+          <span class="mode-cta">Test yourself →</span>
+        </button>
+      </div>
+      <div class="signature">Prepared by <strong>Mr. Khurshid</strong></div>
+    </div>
+  `;
+}
+
+function renderSetup(mode) {
+  const isDrill = mode === 'drill';
+  app.innerHTML = `
+    <div class="screen setup ${isDrill ? 'drill' : 'test'}">
+      <button class="setup-back" onclick="goto('landing')">← Back to menu</button>
+      <span class="setup-badge">${isDrill ? '⚡ DRILL MODE' : '📋 TEST MODE'}</span>
+      <h1>${isDrill ? 'How many questions to master?' : 'How many questions in the test?'}</h1>
+      <p>${isDrill
+        ? "You'll keep going until you've answered each one correctly. Wrong answers come back."
+        : "All questions in one go. No feedback during the test — you'll see the answers at the end."}</p>
+      <div class="target-grid" id="target-grid">
+        ${[10, 20, 50, 100].map(n => `
+          <button class="target-card" data-n="${n}" onclick="pickTarget(${n})">
+            <div class="target-num">${n}</div>
+            <div class="target-label">${n === 100 ? 'All' : 'Questions'}</div>
+          </button>
+        `).join('')}
+      </div>
+      <button class="start-btn" id="start-btn" onclick="startSession()" disabled>
+        Start <span>→</span>
+      </button>
+    </div>
+  `;
+}
+
+function pickTarget(n) {
+  state.target = n;
+  document.querySelectorAll('.target-card').forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.n) === n);
+  });
+  document.getElementById('start-btn').disabled = false;
+}
+
+function startSession() {
+  if (!state.target) return;
+  if (state.screen === 'drill-setup') {
+    state.mode = 'drill';
+    const sampled = sample(QUESTIONS, state.target);
+    state.drillQueue = sampled.map(q => presentQuestion(q));
+    state.drillTotal = state.target;
+    state.drillMastered = 0;
+    state.drillAttempts = 0;
+    state.drillStartTime = Date.now();
+    state.current = state.drillQueue.shift();
+    state.screen = 'drill';
+  } else {
+    state.mode = 'test';
+    const sampled = sample(QUESTIONS, state.target);
+    state.testQueue = sampled.map(q => presentQuestion(q));
+    state.testIndex = 0;
+    state.testAnswers = [];
+    state.current = state.testQueue[0];
+    state.screen = 'test';
+  }
+  resetQuestionUI();
+  render();
+}
+
+function resetQuestionUI() {
+  state.selectedIndex = null;
+  state.isAnswered = false;
+  state.wasCorrect = null;
+}
+
+function renderQuiz(mode) {
+  const q = state.current;
+  let progressFraction, progressLabel;
+  if (mode === 'drill') {
+    progressFraction = state.drillMastered / state.drillTotal;
+    progressLabel = `${state.drillMastered} / ${state.drillTotal} mastered`;
+  } else {
+    progressFraction = state.testIndex / state.testQueue.length;
+    progressLabel = `Question ${state.testIndex + 1} of ${state.testQueue.length}`;
+  }
+
+  const letters = ['A', 'B', 'C'];
+  const optionsHtml = q.options.map((opt, i) => {
+    let cls = 'option';
+    if (mode === 'test' && state.selectedIndex === i && !state.isAnswered) cls += ' selected';
+    if (mode === 'drill' && state.isAnswered) {
+      if (i === q.correctIndex) cls += ' correct';
+      else if (i === state.selectedIndex) cls += ' wrong-pick';
+      else cls += ' dimmed';
+    }
+    return `
+      <button class="${cls}" onclick="pickOption(${i})" ${state.isAnswered ? 'disabled' : ''}>
+        <span class="option-badge">${letters[i]}</span>
+        <span class="option-text">${escapeHtml(opt)}</span>
+        <span class="option-shortcut">${i + 1}</span>
+      </button>
+    `;
+  }).join('');
+
+  let feedbackHtml = '';
+  if (mode === 'drill' && state.isAnswered) {
+    if (state.wasCorrect) {
+      feedbackHtml = `
+        <div class="feedback correct">
+          <div class="feedback-title">✓ To'g'ri!</div>
+          <div class="feedback-body">${escapeHtml(q.explanation)}</div>
+        </div>
+      `;
+    } else {
+      feedbackHtml = `
+        <div class="feedback wrong">
+          <div class="feedback-title">✗ Noto'g'ri</div>
+          <div class="feedback-body">${escapeHtml(q.explanation)}</div>
+        </div>
+      `;
+    }
+  }
+
+  const showNext = (mode === 'drill' && state.isAnswered) || (mode === 'test' && state.selectedIndex !== null);
+  const nextLabel = mode === 'test' && state.testIndex === state.testQueue.length - 1 ? 'Finish' : 'Next';
+
+  app.innerHTML = `
+    <div class="topbar">
+      <span class="topbar-brand">LISTENING · PART 1</span>
+      <div class="topbar-progress">
+        <div class="progress-track">
+          <div class="progress-fill" style="width: ${Math.min(100, progressFraction * 100)}%"></div>
+        </div>
+        <span class="progress-label">${progressLabel}</span>
+      </div>
+      <button class="exit-btn" onclick="confirmExit()" title="Exit">✕</button>
+    </div>
+    <div class="screen quiz">
+      <div class="question-prompt">
+        <div class="question-meta">${mode === 'drill' ? 'DRILL' : 'TEST'} · ATTEMPT ${mode === 'drill' ? state.drillAttempts + 1 : state.testIndex + 1}</div>
+        <div class="question-text">${escapeHtml(q.prompt)}</div>
+      </div>
+      <div class="options">${optionsHtml}</div>
+      ${feedbackHtml}
+      <div class="next-row">
+        ${showNext ? `<span class="hint">Press <kbd>Enter</kbd></span><button class="next-btn" onclick="goNext()">${nextLabel} <span>→</span></button>` : ''}
+      </div>
+      <div class="kbd-hints">
+        Shortcuts: <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> to pick · <kbd>Enter</kbd> to continue · <kbd>Esc</kbd> to exit
+      </div>
+    </div>
+  `;
+}
+
+function pickOption(i) {
+  if (state.isAnswered) return;
+
+  if (state.mode === 'drill') {
+    state.selectedIndex = i;
+    state.isAnswered = true;
+    state.wasCorrect = (i === state.current.correctIndex);
+    state.drillAttempts++;
+    if (state.wasCorrect) {
+      state.drillMastered++;
+    } else {
+      // requeue the question to the back so it resurfaces
+      state.drillQueue.push(state.current);
+    }
+    render();
+  } else {
+    // test mode: just remember the selection
+    state.selectedIndex = i;
+    render();
+  }
+}
+
+function goNext() {
+  if (state.mode === 'drill') {
+    if (state.drillMastered >= state.drillTotal || state.drillQueue.length === 0) {
+      state.screen = 'drill-done';
+      render();
+      return;
+    }
+    state.current = state.drillQueue.shift();
+    resetQuestionUI();
+    render();
+  } else {
+    // test mode
+    if (state.selectedIndex === null) return;
+    state.testAnswers.push({
+      q: state.current,
+      selected: state.selectedIndex,
+    });
+    if (state.testIndex === state.testQueue.length - 1) {
+      state.screen = 'test-results';
+      render();
+      return;
+    }
+    state.testIndex++;
+    state.current = state.testQueue[state.testIndex];
+    resetQuestionUI();
+    render();
+  }
+}
+
+function renderDrillDone() {
+  const elapsed = Math.floor((Date.now() - state.drillStartTime) / 1000);
+  const accuracy = Math.round((state.drillTotal / state.drillAttempts) * 100);
+  app.innerHTML = `
+    <div class="screen results">
+      <div class="results-emoji">🎉</div>
+      <h1 class="results-title">Done!</h1>
+      <p class="results-sub">You mastered all ${state.drillTotal} questions.</p>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-value coral">${state.drillTotal}</div>
+          <div class="stat-label">Mastered</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value teal">${state.drillAttempts}</div>
+          <div class="stat-label">Attempts</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">${formatTime(elapsed)}</div>
+          <div class="stat-label">Time</div>
+        </div>
+      </div>
+      <div class="results-actions">
+        <button class="btn-primary" onclick="goto('drill-setup'); state.target = null;">Try another drill</button>
+        <button class="btn-secondary" onclick="goto('landing')">Back to menu</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderTestResults() {
+  const total = state.testAnswers.length;
+  const correct = state.testAnswers.filter(a => a.selected === a.q.correctIndex).length;
+  const pct = Math.round((correct / total) * 100);
+  const wrongAnswers = state.testAnswers.filter(a => a.selected !== a.q.correctIndex);
+
+  const letters = ['A', 'B', 'C'];
+
+  const reviewHtml = wrongAnswers.length > 0 ? `
+    <div class="review-header">Review · ${wrongAnswers.length} to revisit</div>
+    ${wrongAnswers.map((a, idx) => `
+      <div class="review-item">
+        <div class="review-prompt">${escapeHtml(a.q.prompt)}</div>
+        <div class="review-line you">
+          <span class="lbl">You picked</span>
+          <span class="val">${letters[a.selected]}. ${escapeHtml(a.q.options[a.selected])}</span>
+        </div>
+        <div class="review-line correct">
+          <span class="lbl">Correct</span>
+          <span class="val">${letters[a.q.correctIndex]}. ${escapeHtml(a.q.options[a.q.correctIndex])}</span>
+        </div>
+        <div class="review-explanation">${escapeHtml(a.q.explanation)}</div>
+      </div>
+    `).join('')}
+  ` : `
+    <div class="review-header" style="text-align:center; border:none; color:var(--green)">🎯 Perfect score — nothing to review!</div>
+  `;
+
+  app.innerHTML = `
+    <div class="screen results">
+      <div class="results-emoji">${pct === 100 ? '🏆' : pct >= 70 ? '👏' : '💪'}</div>
+      <h1 class="results-title">${correct} / ${total}</h1>
+      <p class="results-sub">${pct}% correct</p>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-value green">${correct}</div>
+          <div class="stat-label">Correct</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value coral">${wrongAnswers.length}</div>
+          <div class="stat-label">Wrong</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value teal">${pct}%</div>
+          <div class="stat-label">Score</div>
+        </div>
+      </div>
+      <div class="results-actions">
+        <button class="btn-primary" onclick="goto('test-setup'); state.target = null;">Try another test</button>
+        <button class="btn-secondary" onclick="goto('landing')">Back to menu</button>
+      </div>
+      <div class="review">${reviewHtml}</div>
+    </div>
+  `;
+}
+
+function confirmExit() {
+  if (confirm('Exit the session? Your progress will be lost.')) {
+    goto('landing');
+  }
+}
+
+function goto(screen) {
+  state.screen = screen;
+  state.target = null;
+  render();
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+// ============================================================
+// Keyboard shortcuts
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (state.screen !== 'drill' && state.screen !== 'test') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.key === '1' || e.key.toLowerCase() === 'a') {
+    e.preventDefault();
+    pickOption(0);
+  } else if (e.key === '2' || e.key.toLowerCase() === 'b') {
+    e.preventDefault();
+    pickOption(1);
+  } else if (e.key === '3' || e.key.toLowerCase() === 'c') {
+    e.preventDefault();
+    pickOption(2);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    const showNext = (state.mode === 'drill' && state.isAnswered) ||
+                     (state.mode === 'test' && state.selectedIndex !== null);
+    if (showNext) goNext();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    confirmExit();
+  }
+});
+
+// Scroll handler for blob fade-out (cosmetic)
+window.addEventListener('scroll', () => {
+  document.body.classList.toggle('scrolled', window.scrollY > 100);
+});
+
+// Init
+render();
+</script>
+</body>
+</html>
